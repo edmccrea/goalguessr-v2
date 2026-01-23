@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { GoalAnimation } from '$lib/components/animation';
+	import type { AnimationData } from '$lib/server/db/schema';
+
 	let { data } = $props();
 
 	const roundScores = $derived([data.round1Score, data.round2Score, data.round3Score]);
@@ -29,6 +32,17 @@
 
 					{#if round.goal}
 						<div class="p-4">
+							<!-- Animation -->
+							{#if round.goal.animationData}
+								<div class="aspect-[16/10] rounded-lg overflow-hidden border border-border mb-4">
+									<GoalAnimation
+										animation={round.goal.animationData as AnimationData}
+										autoPlay={true}
+										loop={true}
+									/>
+								</div>
+							{/if}
+
 							<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 								<!-- Team -->
 								<div class="p-3 rounded-lg {round.completed ? (round.guess?.teamCorrect ? 'bg-success-light' : 'bg-error-light') : 'bg-surface-dim'}">

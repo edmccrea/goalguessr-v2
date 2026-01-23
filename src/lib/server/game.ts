@@ -161,234 +161,210 @@ export async function getGuessesForGame(gameResultId: string) {
 }
 
 /**
+ * Clear all game data and goals (for dev/testing)
+ */
+export async function clearAllGameData() {
+	// Delete in order due to foreign key constraints
+	await db.delete(guesses);
+	await db.delete(gameResults);
+	await db.delete(dailyGames);
+	await db.delete(goals);
+}
+
+/**
  * Create sample goals for testing
  */
 async function createSampleGoals() {
 	const sampleGoalsData = [
+		// Aguero's title-winning goal - Manchester City vs QPR, 2012
+		// De Jong (Netherlands) → Balotelli (Italy) → Aguero (Argentina) scores
 		{
 			id: generateId(),
-			team: 'Manchester United',
-			year: 1999,
-			scorer: 'Ole Gunnar Solskjaer',
-			competition: 'Champions League Final',
-			opponent: 'Bayern Munich',
-			matchContext: 'Injury time winner to complete the treble',
+			team: 'Manchester City',
+			year: 2012,
+			scorer: 'Sergio Aguero',
+			competition: 'Premier League',
+			opponent: 'QPR',
+			matchContext: '93:20 - Title-winning goal on the final day of the season',
 			status: 'approved' as const,
 			animationData: {
 				duration: 5000,
 				pitch: { width: 100, height: 65 },
 				players: [
-					{ id: 'p1' },
-					{ id: 'p2' },
-					{ id: 'p3' },
-					{ id: 'd1' },
-					{ id: 'd2' },
-					{ id: 'gk' }
+					{ id: 'dejong', imageUrl: 'https://flagcdn.com/w80/nl.png' }, // De Jong - Netherlands
+					{ id: 'balotelli', imageUrl: 'https://flagcdn.com/w80/it.png' }, // Balotelli - Italy
+					{ id: 'aguero', imageUrl: 'https://flagcdn.com/w80/ar.png' } // Aguero - Argentina
 				],
 				keyframes: [
 					{
 						time: 0,
 						positions: {
-							p1: { x: 65, y: 20 },
-							p2: { x: 70, y: 45 },
-							p3: { x: 85, y: 35 },
-							d1: { x: 88, y: 30 },
-							d2: { x: 88, y: 40 },
-							gk: { x: 96, y: 32 },
-							ball: { x: 65, y: 20, holder: 'p1' }
-						}
-					},
-					{
-						time: 2000,
-						positions: {
-							p1: { x: 70, y: 15 },
-							p2: { x: 78, y: 40 },
-							p3: { x: 90, y: 32 },
-							d1: { x: 90, y: 28 },
-							d2: { x: 90, y: 38 },
-							gk: { x: 97, y: 32 },
-							ball: { x: 70, y: 15, holder: 'p1' }
-						}
-					},
-					{
-						time: 3500,
-						positions: {
-							p1: { x: 72, y: 12 },
-							p2: { x: 80, y: 38 },
-							p3: { x: 92, y: 32 },
-							d1: { x: 91, y: 26 },
-							d2: { x: 91, y: 36 },
-							gk: { x: 97, y: 30 },
-							ball: { x: 92, y: 32, holder: 'p3' }
-						}
-					},
-					{
-						time: 5000,
-						positions: {
-							p1: { x: 75, y: 10 },
-							p2: { x: 82, y: 36 },
-							p3: { x: 94, y: 32 },
-							d1: { x: 92, y: 28 },
-							d2: { x: 92, y: 38 },
-							gk: { x: 98, y: 28 },
-							ball: { x: 99, y: 32 }
-						}
-					}
-				],
-				events: [
-					{ time: 3000, type: 'pass', from: 'p1', to: 'p3' },
-					{ time: 4500, type: 'shot', from: 'p3', result: 'goal' }
-				]
-			}
-		},
-		{
-			id: generateId(),
-			team: 'Argentina',
-			year: 1986,
-			scorer: 'Diego Maradona',
-			competition: 'World Cup Quarter-final',
-			opponent: 'England',
-			matchContext: 'Goal of the Century - solo run from own half',
-			isInternational: true,
-			status: 'approved' as const,
-			animationData: {
-				duration: 6000,
-				pitch: { width: 100, height: 65 },
-				players: [
-					{ id: 'p1' },
-					{ id: 'd1' },
-					{ id: 'd2' },
-					{ id: 'd3' },
-					{ id: 'd4' },
-					{ id: 'gk' }
-				],
-				keyframes: [
-					{
-						time: 0,
-						positions: {
-							p1: { x: 45, y: 32 },
-							d1: { x: 55, y: 28 },
-							d2: { x: 60, y: 38 },
-							d3: { x: 75, y: 30 },
-							d4: { x: 80, y: 35 },
-							gk: { x: 95, y: 32 },
-							ball: { x: 45, y: 32, holder: 'p1' }
+							dejong: { x: 68, y: 25 },
+							balotelli: { x: 82, y: 32 },
+							aguero: { x: 75, y: 40 },
+							ball: { x: 68, y: 25, holder: 'dejong' }
 						}
 					},
 					{
 						time: 1500,
 						positions: {
-							p1: { x: 58, y: 30 },
-							d1: { x: 56, y: 32 },
-							d2: { x: 62, y: 35 },
-							d3: { x: 75, y: 30 },
-							d4: { x: 80, y: 35 },
-							gk: { x: 95, y: 32 },
-							ball: { x: 58, y: 30, holder: 'p1' }
+							dejong: { x: 72, y: 28 },
+							balotelli: { x: 88, y: 32 },
+							aguero: { x: 80, y: 38 },
+							ball: { x: 88, y: 32, holder: 'balotelli' }
 						}
 					},
 					{
 						time: 3000,
 						positions: {
-							p1: { x: 72, y: 28 },
-							d1: { x: 65, y: 32 },
-							d2: { x: 70, y: 35 },
-							d3: { x: 78, y: 30 },
-							d4: { x: 82, y: 33 },
-							gk: { x: 95, y: 32 },
-							ball: { x: 72, y: 28, holder: 'p1' }
+							dejong: { x: 78, y: 30 },
+							balotelli: { x: 90, y: 30 },
+							aguero: { x: 88, y: 35 },
+							ball: { x: 88, y: 35, holder: 'aguero' }
 						}
 					},
 					{
-						time: 4500,
+						time: 5000,
 						positions: {
-							p1: { x: 88, y: 32 },
-							d1: { x: 80, y: 30 },
-							d2: { x: 82, y: 35 },
-							d3: { x: 86, y: 28 },
-							d4: { x: 88, y: 36 },
-							gk: { x: 96, y: 34 },
-							ball: { x: 88, y: 32, holder: 'p1' }
-						}
-					},
-					{
-						time: 6000,
-						positions: {
-							p1: { x: 92, y: 32 },
-							d1: { x: 85, y: 30 },
-							d2: { x: 87, y: 35 },
-							d3: { x: 90, y: 28 },
-							d4: { x: 90, y: 36 },
-							gk: { x: 97, y: 30 },
+							dejong: { x: 82, y: 32 },
+							balotelli: { x: 92, y: 28 },
+							aguero: { x: 92, y: 34 },
 							ball: { x: 99, y: 32 }
 						}
 					}
 				],
 				events: [
-					{ time: 1200, type: 'dribble', from: 'p1' },
-					{ time: 2700, type: 'dribble', from: 'p1' },
-					{ time: 4200, type: 'dribble', from: 'p1' },
-					{ time: 5500, type: 'shot', from: 'p1', result: 'goal' }
+					{ time: 1000, type: 'pass', from: 'dejong', to: 'balotelli' },
+					{ time: 2500, type: 'pass', from: 'balotelli', to: 'aguero' },
+					{ time: 4500, type: 'shot', from: 'aguero', result: 'goal' }
 				]
 			}
 		},
+		// Zidane's volley - Real Madrid vs Bayer Leverkusen, 2002 Champions League Final
+		// Roberto Carlos (Brazil) crosses, Zidane (France) volleys
 		{
 			id: generateId(),
-			team: 'Liverpool',
-			year: 2005,
-			scorer: 'Steven Gerrard',
+			team: 'Real Madrid',
+			year: 2002,
+			scorer: 'Zinedine Zidane',
 			competition: 'Champions League Final',
-			opponent: 'AC Milan',
-			matchContext: 'Header to start the comeback from 3-0 down',
+			opponent: 'Bayer Leverkusen',
+			matchContext: 'Stunning left-foot volley to win the Champions League',
 			status: 'approved' as const,
 			animationData: {
-				duration: 4000,
+				duration: 5000,
 				pitch: { width: 100, height: 65 },
 				players: [
-					{ id: 'p1' },
-					{ id: 'p2' },
-					{ id: 'd1' },
-					{ id: 'd2' },
-					{ id: 'gk' }
+					{ id: 'carlos', imageUrl: 'https://flagcdn.com/w80/br.png' }, // Roberto Carlos - Brazil
+					{ id: 'zidane', imageUrl: 'https://flagcdn.com/w80/fr.png' } // Zidane - France
 				],
 				keyframes: [
 					{
 						time: 0,
 						positions: {
-							p1: { x: 70, y: 10 },
-							p2: { x: 85, y: 35 },
-							d1: { x: 88, y: 28 },
-							d2: { x: 88, y: 40 },
-							gk: { x: 96, y: 32 },
-							ball: { x: 70, y: 10, holder: 'p1' }
+							carlos: { x: 75, y: 8 },
+							zidane: { x: 82, y: 38 },
+							ball: { x: 75, y: 8, holder: 'carlos' }
 						}
 					},
 					{
 						time: 2000,
 						positions: {
-							p1: { x: 75, y: 8 },
-							p2: { x: 90, y: 32 },
-							d1: { x: 90, y: 30 },
-							d2: { x: 90, y: 38 },
-							gk: { x: 96, y: 32 },
-							ball: { x: 90, y: 32 }
+							carlos: { x: 78, y: 6 },
+							zidane: { x: 86, y: 32 },
+							ball: { x: 85, y: 20 }
 						}
 					},
 					{
-						time: 4000,
+						time: 3500,
 						positions: {
-							p1: { x: 78, y: 8 },
-							p2: { x: 92, y: 32 },
-							d1: { x: 91, y: 30 },
-							d2: { x: 91, y: 38 },
-							gk: { x: 97, y: 35 },
+							carlos: { x: 80, y: 8 },
+							zidane: { x: 88, y: 28 },
+							ball: { x: 88, y: 28, holder: 'zidane' }
+						}
+					},
+					{
+						time: 5000,
+						positions: {
+							carlos: { x: 82, y: 10 },
+							zidane: { x: 90, y: 30 },
+							ball: { x: 99, y: 30 }
+						}
+					}
+				],
+				events: [
+					{ time: 1500, type: 'pass', from: 'carlos', to: 'zidane', curve: 0.4 },
+					{ time: 4200, type: 'shot', from: 'zidane', result: 'goal' }
+				]
+			}
+		},
+		// Messi's solo goal vs Getafe - Barcelona, 2007
+		// Just Messi (Argentina) - solo run
+		{
+			id: generateId(),
+			team: 'Barcelona',
+			year: 2007,
+			scorer: 'Lionel Messi',
+			competition: 'Copa del Rey Semi-final',
+			opponent: 'Getafe',
+			matchContext: 'Maradona-esque solo run from the halfway line',
+			status: 'approved' as const,
+			animationData: {
+				duration: 7000,
+				pitch: { width: 100, height: 65 },
+				players: [
+					{ id: 'messi', imageUrl: 'https://flagcdn.com/w80/ar.png' } // Messi - Argentina
+				],
+				keyframes: [
+					{
+						time: 0,
+						positions: {
+							messi: { x: 50, y: 42 },
+							ball: { x: 50, y: 42, holder: 'messi' }
+						}
+					},
+					{
+						time: 1500,
+						positions: {
+							messi: { x: 58, y: 38 },
+							ball: { x: 58, y: 38, holder: 'messi' }
+						}
+					},
+					{
+						time: 3000,
+						positions: {
+							messi: { x: 68, y: 35 },
+							ball: { x: 68, y: 35, holder: 'messi' }
+						}
+					},
+					{
+						time: 4500,
+						positions: {
+							messi: { x: 78, y: 36 },
+							ball: { x: 78, y: 36, holder: 'messi' }
+						}
+					},
+					{
+						time: 5500,
+						positions: {
+							messi: { x: 88, y: 34 },
+							ball: { x: 88, y: 34, holder: 'messi' }
+						}
+					},
+					{
+						time: 7000,
+						positions: {
+							messi: { x: 93, y: 33 },
 							ball: { x: 99, y: 32 }
 						}
 					}
 				],
 				events: [
-					{ time: 1500, type: 'pass', from: 'p1', to: 'p2' },
-					{ time: 3500, type: 'shot', from: 'p2', result: 'goal' }
+					{ time: 1200, type: 'dribble', from: 'messi' },
+					{ time: 2700, type: 'dribble', from: 'messi' },
+					{ time: 4200, type: 'dribble', from: 'messi' },
+					{ time: 5200, type: 'dribble', from: 'messi' },
+					{ time: 6500, type: 'shot', from: 'messi', result: 'goal' }
 				]
 			}
 		}

@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const roundNumber = parseInt(params.round);
 
 	if (isNaN(roundNumber) || roundNumber < 1 || roundNumber > 3) {
-		throw redirect(303, '/play');
+		throw redirect(303, '/play/1');
 	}
 
 	const dailyGame = await getTodaysDailyGame();
@@ -46,7 +46,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const goal = await getGoalForRound(dailyGame.id, roundNumber);
 
 	if (!goal) {
-		throw redirect(303, '/play');
+		throw redirect(303, '/play/1');
 	}
 
 	return {

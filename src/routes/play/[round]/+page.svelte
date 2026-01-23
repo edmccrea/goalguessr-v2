@@ -101,8 +101,18 @@
 		<!-- Header -->
 		<div class="flex justify-between items-center mb-6">
 			<div>
-				<a href="/play" class="text-text-muted hover:text-primary text-sm">&larr; Back to game</a>
-				<h1 class="text-2xl md:text-3xl font-bold">Round {data.roundNumber}</h1>
+				<p class="text-text-muted text-sm mb-1">Round {data.roundNumber} of 3</p>
+				<div class="flex gap-1.5">
+					{#each [1, 2, 3] as round}
+						<div
+							class="w-8 h-1.5 rounded-full {round < data.roundNumber
+								? 'bg-primary'
+								: round === data.roundNumber
+									? 'bg-primary'
+									: 'bg-border'}"
+						></div>
+					{/each}
+				</div>
 			</div>
 			<div class="text-right">
 				<div class="text-sm text-text-muted">Time</div>

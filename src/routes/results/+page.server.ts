@@ -50,7 +50,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 								scorer: goal.scorer,
 								competition: goal.competition,
 								opponent: goal.opponent,
-								matchContext: goal.matchContext
+								matchContext: goal.matchContext,
+								animationData: goal.animationData
 							}
 						: null,
 					guess: null
@@ -75,7 +76,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 							scorer: goal.scorer,
 							competition: goal.competition,
 							opponent: goal.opponent,
-							matchContext: goal.matchContext
+							matchContext: goal.matchContext,
+							animationData: goal.animationData
 						}
 					: null,
 				guess: {
