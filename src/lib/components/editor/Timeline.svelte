@@ -159,12 +159,22 @@
 	}
 </script>
 
-<div class="bg-surface border border-border rounded-xl p-3">
+<div class="bg-surface border border-border rounded-2xl p-4 shadow-lg">
 	<!-- Header row with duration and controls -->
-	<div class="flex items-center justify-between mb-3">
-		<div class="flex items-center gap-3">
-			<div class="flex items-center gap-1.5 text-sm">
-				<label for="duration" class="text-text-muted">Duration:</label>
+	<div class="flex items-center justify-between mb-4">
+		<div class="flex items-center gap-4">
+			<div class="flex items-center gap-2">
+				<div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+						<circle cx="12" cy="12" r="10"/>
+						<polyline points="12 6 12 12 16 14"/>
+					</svg>
+				</div>
+				<span class="text-sm font-medium text-text-muted">Timeline</span>
+			</div>
+
+			<div class="flex items-center gap-2 bg-surface-dim rounded-xl px-3 py-1.5">
+				<label for="duration" class="text-xs text-text-muted font-medium">Duration</label>
 				<input
 					type="number"
 					id="duration"
@@ -173,16 +183,22 @@
 					step="0.5"
 					value={duration / 1000}
 					onchange={handleDurationChange}
-					class="w-14 bg-surface-dim border border-border rounded px-2 py-1 text-sm text-center"
+					class="w-14 bg-surface border border-border rounded-lg px-2 py-1 text-sm text-center focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
 				/>
-				<span class="text-text-muted">sec</span>
+				<span class="text-xs text-text-muted">sec</span>
 			</div>
+
 			{#if keyframes.length > 2}
 				<button
 					onclick={autoDistribute}
-					class="px-2 py-1 text-xs bg-surface-dim hover:bg-border rounded transition-colors"
+					class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-surface-dim hover:bg-border rounded-lg transition-colors"
 					title="Evenly space all keyframes"
 				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="3" y1="12" x2="21" y2="12"/>
+						<line x1="3" y1="6" x2="21" y2="6"/>
+						<line x1="3" y1="18" x2="21" y2="18"/>
+					</svg>
 					Auto-space
 				</button>
 			{/if}
@@ -191,9 +207,13 @@
 		{#if selectedIndex > 0}
 			<button
 				onclick={removeKeyframe}
-				class="px-2 py-1 text-xs bg-error-light hover:bg-error/20 text-error rounded transition-colors"
+				class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-error-light hover:bg-error/20 text-error rounded-lg transition-colors"
 				title="Delete selected frame"
 			>
+				<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="3 6 5 6 21 6"/>
+					<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+				</svg>
 				Delete Frame
 			</button>
 		{/if}
@@ -202,27 +222,30 @@
 	<!-- Visual timeline bar -->
 	<div
 		bind:this={timelineElement}
-		class="relative h-10 bg-surface-dim rounded-lg mb-3 touch-none"
+		class="relative h-12 bg-surface-dim rounded-xl mb-4 touch-none"
 		onpointermove={handleTimelineDrag}
 		onpointerup={finishDragging}
 		onpointerleave={finishDragging}
 	>
 		<!-- Time markers -->
-		<div class="absolute inset-x-0 top-0 flex justify-between px-2 text-[10px] text-text-muted">
+		<div class="absolute inset-x-0 top-1 flex justify-between px-3 text-[10px] text-text-muted font-medium">
 			<span>0s</span>
 			<span>{(duration / 1000).toFixed(0)}s</span>
 		</div>
+
+		<!-- Progress track -->
+		<div class="absolute top-6 left-3 right-3 h-1 bg-border rounded-full"></div>
 
 		<!-- Drag preview indicator -->
 		{#if draggingIndex !== null && dragPreviewTime !== null}
 			{@const previewPosition = getTimelinePosition(dragPreviewTime)}
 			<div
-				class="absolute top-3 w-5 h-5 -ml-2.5 rounded-full bg-primary/30 border-2 border-primary border-dashed pointer-events-none"
-				style="left: {previewPosition}%"
+				class="absolute top-5 w-3 h-3 -ml-1.5 rounded-full bg-primary/30 border-2 border-primary border-dashed pointer-events-none"
+				style="left: calc({previewPosition}% * 0.92 + 3%)"
 			></div>
 			<div
-				class="absolute top-9 -ml-4 text-[10px] font-medium text-primary whitespace-nowrap pointer-events-none"
-				style="left: {previewPosition}%"
+				class="absolute top-10 -ml-4 text-[10px] font-medium text-primary whitespace-nowrap pointer-events-none"
+				style="left: calc({previewPosition}% * 0.92 + 3%)"
 			>
 				{formatTime(dragPreviewTime)}
 			</div>
@@ -238,17 +261,20 @@
 			<button
 				onclick={() => selectKeyframe(index)}
 				onpointerdown={(e) => startDragging(e, index)}
-				class="absolute top-3 w-4 h-4 -ml-2 rounded-full border-2 transition-all"
+				class="absolute top-5 w-3 h-3 -ml-1.5 rounded-full border-2 transition-all shadow-sm"
 				class:bg-primary={isSelected}
 				class:border-primary={isSelected}
+				class:ring-2={isSelected}
+				class:ring-primary={isSelected}
 				class:bg-white={!isSelected}
 				class:border-border={!isSelected}
 				class:hover:border-primary={!isSelected}
-				class:scale-125={isSelected}
+				class:hover:scale-110={!isSelected}
+				class:scale-110={isSelected}
 				class:cursor-grab={index !== 0}
 				class:cursor-grabbing={isDragging}
 				class:opacity-50={isDragging}
-				style="left: {position}%"
+				style="left: calc({position}% * 0.92 + 3%)"
 				title="{index === 0 ? 'Start (fixed)' : `Frame ${index}: Drag to move`}"
 			></button>
 		{/each}
@@ -263,18 +289,19 @@
 			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 			<div
 				onclick={() => selectKeyframe(index)}
-				class="flex-shrink-0 w-20 p-2 rounded-lg border-2 transition-all text-left hover:border-primary cursor-pointer"
+				class="flex-shrink-0 w-24 p-2.5 rounded-xl border-2 transition-all text-left hover:border-primary cursor-pointer"
 				class:border-primary={isSelected}
 				class:bg-primary-light={isSelected}
+				class:shadow-sm={isSelected}
 				class:border-border={!isSelected}
 				class:bg-surface-dim={!isSelected}
 			>
-				<div class="flex items-center justify-between mb-0.5">
-					<span class="text-[10px] font-bold text-text-muted">
+				<div class="flex items-center justify-between mb-1">
+					<span class="text-[10px] font-bold text-text-muted uppercase tracking-wide">
 						{index === 0 ? 'Start' : `Frame ${index}`}
 					</span>
 					{#if isSelected}
-						<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+						<span class="w-2 h-2 rounded-full bg-primary"></span>
 					{/if}
 				</div>
 				<!-- Editable time -->
@@ -289,14 +316,14 @@
 						step="0.1"
 						min="0.1"
 						max={duration / 1000}
-						class="w-full text-xs font-medium bg-white border border-primary rounded px-1 py-0.5"
+						class="w-full text-xs font-medium bg-white border border-primary rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
 						autofocus
 					/>
 				{:else}
 					<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 					<span
 						onclick={(e) => { e.stopPropagation(); startEditingTime(index); }}
-						class="text-xs font-medium transition-colors block"
+						class="text-sm font-semibold transition-colors block"
 						class:hover:text-primary={index !== 0}
 						class:cursor-pointer={index !== 0}
 						class:cursor-default={index === 0}
@@ -306,7 +333,7 @@
 					</span>
 				{/if}
 				{#if eventsHere.length > 0}
-					<div class="mt-0.5 text-[10px] text-text-muted truncate">
+					<div class="mt-1 text-[10px] text-text-muted truncate">
 						{eventsHere.join(', ')}
 					</div>
 				{/if}
@@ -316,11 +343,13 @@
 		<!-- Add keyframe button -->
 		<button
 			onclick={addKeyframe}
-			class="flex-shrink-0 w-20 p-2 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary-light/50 transition-all flex flex-col items-center justify-center text-text-muted hover:text-primary"
-			title="Add a new keyframe (will auto-distribute)"
+			class="group flex-shrink-0 w-24 p-2.5 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary-light/50 transition-all flex flex-col items-center justify-center text-text-muted hover:text-primary"
+			title="Add a new keyframe"
 		>
-			<span class="text-xl leading-none">+</span>
-			<span class="text-[10px] mt-0.5">Add Frame</span>
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:scale-110">
+				<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+			</svg>
+			<span class="text-[10px] mt-1 font-medium">Add Frame</span>
 		</button>
 	</div>
 </div>

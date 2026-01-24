@@ -401,6 +401,14 @@ function validate(): { valid: boolean; errors: string[] } {
 		errors.push('Enter a valid year');
 	}
 
+	if (!metadata.competition.trim()) {
+		errors.push('Enter the competition');
+	}
+
+	if (!metadata.opponent.trim()) {
+		errors.push('Enter the opponent');
+	}
+
 	return {
 		valid: errors.length === 0,
 		errors
