@@ -5,9 +5,10 @@
 	interface Props {
 		onsubmit: () => void;
 		isSubmitting?: boolean;
+		submitLabel?: string;
 	}
 
-	let { onsubmit, isSubmitting = false }: Props = $props();
+	let { onsubmit, isSubmitting = false, submitLabel = 'Submit for Review' }: Props = $props();
 
 	const metadata = $derived(editorState.metadata);
 	const validation = $derived(editorState.validate());
@@ -148,6 +149,17 @@
 	</div>
 
 	<div>
+		<label for="matchContext" class="block text-sm font-medium mb-1.5">Match Context</label>
+		<textarea
+			id="matchContext"
+			bind:value={metadata.matchContext}
+			rows="2"
+			class="w-full bg-surface border border-border rounded-lg px-4 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+			placeholder="e.g. 93:20 - Title-winning goal on the final day of the season"
+		></textarea>
+	</div>
+
+	<div>
 		<label for="video" class="block text-sm font-medium mb-1.5">Video URL (optional)</label>
 		<input
 			type="url"
@@ -186,9 +198,9 @@
 		class="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-4"
 	>
 		{#if isSubmitting}
-			Submitting...
+			Saving...
 		{:else}
-			Submit for Review
+			{submitLabel}
 		{/if}
 	</button>
 </div>

@@ -1,7 +1,14 @@
 <script lang="ts">
 	import type { ActionData } from './$types';
+	import { toast } from 'svelte-sonner';
 
 	let { form }: { form: ActionData } = $props();
+
+	$effect(() => {
+		if (form?.error) {
+			toast.error(form.error);
+		}
+	});
 </script>
 
 <div class="min-h-screen p-8 flex items-center justify-center">
@@ -10,12 +17,6 @@
 			<a href="/" class="text-text-muted hover:text-primary text-sm">&larr; Back to Home</a>
 			<h1 class="text-4xl font-bold mt-2">Create Account</h1>
 		</div>
-
-		{#if form?.error}
-			<div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-4">
-				{form.error}
-			</div>
-		{/if}
 
 		<form
 			method="POST"

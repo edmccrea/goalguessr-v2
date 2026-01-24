@@ -1,13 +1,89 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { goals } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { goals, guesses } from '$lib/server/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import {
 	getTodaysDailyGame,
 	getOrCreateGameResult,
 	getGuessesForGame
 } from '$lib/server/game';
+
+interface CommunityStats {
+	totalGuesses: number;
+	teamCorrectPercent: number;
+	yearCorrectPercent: number;
+	scorerCorrectPercent: number;
+	mostGuessedTeam: string | null;
+	mostGuessedYear: number | null;
+	mostGuessedScorer: string | null;
+}
+
+async function getCommunityStats(goalId: string): Promise<CommunityStats> {
+	// Get all guesses for this goal
+	const allGuesses = await db
+		.select({
+			guessedTeam: guesses.guessedTeam,
+			guessedYear: guesses.guessedYear,
+			guessedScorer: guesses.guessedScorer,
+			teamCorrect: guesses.teamCorrect,
+			yearCorrect: guesses.yearCorrect,
+			scorerCorrect: guesses.scorerCorrect
+		})
+		.from(guesses)
+		.where(eq(guesses.goalId, goalId))
+		.all();
+
+	const totalGuesses = allGuesses.length;
+
+	if (totalGuesses === 0) {
+		return {
+			totalGuesses: 0,
+			teamCorrectPercent: 0,
+			yearCorrectPercent: 0,
+			scorerCorrectPercent: 0,
+			mostGuessedTeam: null,
+			mostGuessedYear: null,
+			mostGuessedScorer: null
+		};
+	}
+
+	// Calculate correct percentages
+	const teamCorrect = allGuesses.filter((g) => g.teamCorrect).length;
+	const yearCorrect = allGuesses.filter((g) => g.yearCorrect).length;
+	const scorerCorrect = allGuesses.filter((g) => g.scorerCorrect).length;
+
+	// Find most guessed values
+	const teamCounts = new Map<string, number>();
+	const yearCounts = new Map<number, number>();
+	const scorerCounts = new Map<string, number>();
+
+	allGuesses.forEach((g) => {
+		if (g.guessedTeam) {
+			teamCounts.set(g.guessedTeam, (teamCounts.get(g.guessedTeam) ?? 0) + 1);
+		}
+		if (g.guessedYear) {
+			yearCounts.set(g.guessedYear, (yearCounts.get(g.guessedYear) ?? 0) + 1);
+		}
+		if (g.guessedScorer) {
+			scorerCounts.set(g.guessedScorer, (scorerCounts.get(g.guessedScorer) ?? 0) + 1);
+		}
+	});
+
+	const mostGuessedTeam = [...teamCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+	const mostGuessedYear = [...yearCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+	const mostGuessedScorer = [...scorerCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+	return {
+		totalGuesses,
+		teamCorrectPercent: Math.round((teamCorrect / totalGuesses) * 100),
+		yearCorrectPercent: Math.round((yearCorrect / totalGuesses) * 100),
+		scorerCorrectPercent: Math.round((scorerCorrect / totalGuesses) * 100),
+		mostGuessedTeam,
+		mostGuessedYear,
+		mostGuessedScorer
+	};
+}
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const dailyGame = await getTodaysDailyGame();
@@ -33,11 +109,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 					roundNumber,
 					completed: false,
 					goal: null,
-					guess: null
+					guess: null,
+					communityStats: null
 				};
 			}
 
 			const goal = await db.select().from(goals).where(eq(goals.id, goalId)).get();
+			const communityStats = await getCommunityStats(goalId);
 
 			if (!guess) {
 				return {
@@ -54,7 +132,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 								animationData: goal.animationData
 							}
 						: null,
-					guess: null
+					guess: null,
+					communityStats
 				};
 			}
 
@@ -89,7 +168,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 					scorerCorrect: guess.scorerCorrect,
 					timeTakenMs: guess.timeTakenMs,
 					score: guessScore
-				}
+				},
+				communityStats
 			};
 		})
 	);

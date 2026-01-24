@@ -32,6 +32,7 @@ let metadata = $state({
 	scorer: '',
 	competition: '',
 	opponent: '',
+	matchContext: '',
 	videoUrl: '',
 	isInternational: false
 });
@@ -43,7 +44,7 @@ const playerCount = $derived(animation.players.length);
 // Get the ball holder at a given time based on events
 function getBallHolderAtTime(time: number): string | undefined {
 	// First player starts with the ball
-	let holder = animation.players[0]?.id;
+	let holder: string | undefined = animation.players[0]?.id;
 
 	// Walk through events in order to determine holder at this time
 	// Events at the current time represent transitions that happen DURING that keyframe,
@@ -327,6 +328,7 @@ function reset() {
 		scorer: '',
 		competition: '',
 		opponent: '',
+		matchContext: '',
 		videoUrl: '',
 		isInternational: false
 	};
@@ -339,6 +341,31 @@ function loadAnimation(data: AnimationData) {
 	selectedPlayerId = null;
 	isPreviewMode = false;
 	previewTime = 0;
+}
+
+// Load a full goal (animation + metadata) for editing
+function loadGoal(goal: {
+	team: string;
+	year: number;
+	scorer: string;
+	competition: string | null;
+	opponent: string | null;
+	matchContext: string | null;
+	videoUrl: string | null;
+	isInternational: boolean | null;
+	animationData: AnimationData;
+}) {
+	loadAnimation(goal.animationData);
+	metadata = {
+		team: goal.team,
+		year: goal.year,
+		scorer: goal.scorer,
+		competition: goal.competition ?? '',
+		opponent: goal.opponent ?? '',
+		matchContext: goal.matchContext ?? '',
+		videoUrl: goal.videoUrl ?? '',
+		isInternational: goal.isInternational ?? false
+	};
 }
 
 // Get animation data for saving
@@ -434,6 +461,7 @@ export const editorState = {
 	setDuration,
 	reset,
 	loadAnimation,
+	loadGoal,
 	getAnimationData,
 	validate
 };

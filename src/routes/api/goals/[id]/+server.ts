@@ -3,8 +3,9 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { goals } from '$lib/server/db/schema';
 import type { AnimationData } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 
-interface GoalSubmission {
+interface GoalUpdate {
 	team: string;
 	year: number;
 	scorer: string;
@@ -16,14 +17,18 @@ interface GoalSubmission {
 	animationData: AnimationData;
 }
 
-export const POST: RequestHandler = async ({ request, locals }) => {
-	// Require authenticated user
+export const PUT: RequestHandler = async ({ request, locals, params }) => {
+	// Require authenticated admin user
 	if (!locals.user) {
-		return json({ error: 'You must be logged in to submit a goal' }, { status: 401 });
+		return json({ error: 'You must be logged in' }, { status: 401 });
+	}
+
+	if (!locals.user.isAdmin) {
+		return json({ error: 'Admin access required' }, { status: 403 });
 	}
 
 	try {
-		const body = (await request.json()) as GoalSubmission;
+		const body = (await request.json()) as GoalUpdate;
 
 		// Validate required fields
 		if (!body.team?.trim()) {
@@ -56,26 +61,34 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			return json({ error: 'Animation must have a shot event' }, { status: 400 });
 		}
 
-		const id = crypto.randomUUID();
-
-		await db.insert(goals).values({
-			id,
-			team: body.team.trim(),
-			year: body.year,
-			scorer: body.scorer.trim(),
-			competition: body.competition?.trim() || null,
-			opponent: body.opponent?.trim() || null,
-			matchContext: body.matchContext?.trim() || null,
-			videoUrl: body.videoUrl?.trim() || null,
-			isInternational: body.isInternational ?? false,
-			animationData: body.animationData,
-			status: 'pending',
-			submittedBy: locals.user.id
+		// Check goal exists
+		const existingGoal = await db.query.goals.findFirst({
+			where: eq(goals.id, params.id)
 		});
 
-		return json({ success: true, id }, { status: 201 });
+		if (!existingGoal) {
+			return json({ error: 'Goal not found' }, { status: 404 });
+		}
+
+		// Update the goal
+		await db
+			.update(goals)
+			.set({
+				team: body.team.trim(),
+				year: body.year,
+				scorer: body.scorer.trim(),
+				competition: body.competition?.trim() || null,
+				opponent: body.opponent?.trim() || null,
+				matchContext: body.matchContext?.trim() || null,
+				videoUrl: body.videoUrl?.trim() || null,
+				isInternational: body.isInternational ?? false,
+				animationData: body.animationData
+			})
+			.where(eq(goals.id, params.id));
+
+		return json({ success: true, id: params.id });
 	} catch (error) {
-		console.error('Goal submission error:', error);
-		return json({ error: 'Failed to submit goal' }, { status: 500 });
+		console.error('Goal update error:', error);
+		return json({ error: 'Failed to update goal' }, { status: 500 });
 	}
 };

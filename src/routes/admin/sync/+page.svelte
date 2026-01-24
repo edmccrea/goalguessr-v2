@@ -1,9 +1,18 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { toast } from 'svelte-sonner';
 
 	let { data, form } = $props();
 
 	let isSyncing = $state(false);
+
+	$effect(() => {
+		if (form?.success) {
+			toast.success(form.message);
+		} else if (form?.error) {
+			toast.error(form.error);
+		}
+	});
 </script>
 
 <div class="min-h-screen p-8">
@@ -55,20 +64,6 @@
 		<!-- Sync Actions -->
 		<div class="bg-surface border border-border p-6 rounded-xl shadow-sm">
 			<h2 class="font-semibold mb-4">Sync Actions</h2>
-
-			{#if form?.success}
-				<div
-					class="bg-success-light border border-success text-success px-4 py-3 rounded-lg mb-4 text-sm"
-				>
-					{form.message}
-				</div>
-			{/if}
-
-			{#if form?.error}
-				<div class="bg-error-light border border-error text-error px-4 py-3 rounded-lg mb-4 text-sm">
-					{form.error}
-				</div>
-			{/if}
 
 			<form
 				method="POST"

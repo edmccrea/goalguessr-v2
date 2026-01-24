@@ -1,17 +1,27 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import { EditorPitch, Timeline, MetadataForm, EditorToolbar, PlayerActionPanel } from '$lib/components/editor';
 	import GoalAnimation from '$lib/components/animation/GoalAnimation.svelte';
 	import { editorState } from '$lib/editor-state.svelte';
 	import { toast } from 'svelte-sonner';
 
+	let { data } = $props();
+
+	const goalId = $derived(page.params.id);
+
 	type ViewMode = 'edit' | 'split' | 'preview';
 	let viewMode = $state<ViewMode>('edit');
 
-	// Derived for backwards compatibility with existing logic
 	let isPreviewMode = $derived(viewMode === 'preview');
 	let isSubmitting = $state(false);
 
-	// Reactive animation data for live preview - ensures GoalAnimation updates when edits are made
+	// Load the goal data into the editor on mount
+	onMount(() => {
+		editorState.loadGoal(data.goal);
+	});
+
+	// Reactive animation data for live preview
 	const liveAnimationData = $derived(editorState.getAnimationData());
 
 	// Step indicator logic
@@ -22,16 +32,10 @@
 
 	const steps = $derived([
 		{ label: 'Players', done: playerCount > 0 },
-		{ label: 'Position', done: playerCount > 0 }, // Consider done if players exist
+		{ label: 'Position', done: playerCount > 0 },
 		{ label: 'Animate', done: keyframeCount >= 2 && hasShot },
-		{ label: 'Submit', done: validation.valid }
+		{ label: 'Save', done: validation.valid }
 	]);
-
-	function cycleViewMode() {
-		if (viewMode === 'edit') viewMode = 'split';
-		else if (viewMode === 'split') viewMode = 'preview';
-		else viewMode = 'edit';
-	}
 
 	function setViewMode(mode: ViewMode) {
 		viewMode = mode;
@@ -44,8 +48,8 @@
 		isSubmitting = true;
 
 		try {
-			const response = await fetch('/api/goals', {
-				method: 'POST',
+			const response = await fetch(`/api/goals/${goalId}`, {
+				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					...editorState.metadata,
@@ -53,18 +57,15 @@
 				})
 			});
 
-			const data = await response.json();
+			const responseData = await response.json();
 
 			if (!response.ok) {
-				throw new Error(data.error || 'Failed to submit');
+				throw new Error(responseData.error || 'Failed to update');
 			}
 
-			toast.success('Goal submitted!', {
-				description: 'Your goal will be reviewed by an admin.'
-			});
-			editorState.reset();
+			toast.success('Goal updated successfully');
 		} catch (err) {
-			toast.error('Failed to submit goal', {
+			toast.error('Failed to update goal', {
 				description: err instanceof Error ? err.message : 'Please try again.'
 			});
 		} finally {
@@ -73,8 +74,8 @@
 	}
 
 	function handleReset() {
-		if (confirm('Are you sure? This will clear all your work.')) {
-			editorState.reset();
+		if (confirm('Are you sure? This will revert all changes to the last saved state.')) {
+			editorState.loadGoal(data.goal);
 		}
 	}
 </script>
@@ -84,8 +85,9 @@
 		<!-- Header -->
 		<div class="mb-4 flex flex-wrap items-center justify-between gap-4">
 			<div>
-				<a href="/" class="text-text-muted hover:text-primary text-sm">&larr; Back to Home</a>
-				<h1 class="text-2xl md:text-3xl font-bold">Goal Editor</h1>
+				<a href="/admin/goals" class="text-text-muted hover:text-primary text-sm">&larr; Back to Goals</a>
+				<h1 class="text-2xl md:text-3xl font-bold">Edit Goal</h1>
+				<p class="text-text-muted text-sm mt-1">{data.goal.scorer} - {data.goal.team} ({data.goal.year})</p>
 			</div>
 			<div class="flex gap-2">
 				<!-- View mode toggle group -->
@@ -128,7 +130,7 @@
 					onclick={handleReset}
 					class="bg-surface-dim hover:bg-border text-text px-4 py-2 rounded-lg font-medium transition-colors"
 				>
-					Reset
+					Revert
 				</button>
 			</div>
 		</div>
@@ -202,7 +204,7 @@
 			<!-- Sidebar: Metadata Form (hidden in split view for more space) -->
 			{#if viewMode !== 'split'}
 				<div class="xl:col-span-1">
-					<MetadataForm onsubmit={handleSubmit} {isSubmitting} />
+					<MetadataForm onsubmit={handleSubmit} {isSubmitting} submitLabel="Save Changes" />
 				</div>
 			{/if}
 		</div>
