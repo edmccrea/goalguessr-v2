@@ -167,6 +167,134 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
+	updateGameSlot: async ({ request }) => {
+		const formData = await request.formData();
+		const gameId = formData.get('gameId') as string;
+		const goalId = formData.get('goalId') as string;
+		const position = parseInt(formData.get('position') as string);
+		const date = formData.get('date') as string;
+
+		if (!gameId || !goalId || !position || !date) {
+			return fail(400, { error: 'Missing required fields' });
+		}
+
+		// Prevent editing today's game
+		const today = new Date().toISOString().split('T')[0];
+		if (date === today) {
+			return fail(400, { error: "Cannot edit today's game" });
+		}
+
+		if (position < 1 || position > 3) {
+			return fail(400, { error: 'Position must be 1, 2, or 3' });
+		}
+
+		const updateData: Record<string, string> = {};
+		if (position === 1) updateData.goal1Id = goalId;
+		if (position === 2) updateData.goal2Id = goalId;
+		if (position === 3) updateData.goal3Id = goalId;
+
+		await db.update(dailyGames).set(updateData).where(eq(dailyGames.id, gameId));
+
+		return { success: true };
+	},
+
+	removeGameSlot: async ({ request }) => {
+		const formData = await request.formData();
+		const gameId = formData.get('gameId') as string;
+		const position = parseInt(formData.get('position') as string);
+		const date = formData.get('date') as string;
+
+		if (!gameId || !position || !date) {
+			return fail(400, { error: 'Missing required fields' });
+		}
+
+		// Prevent editing today's game
+		const today = new Date().toISOString().split('T')[0];
+		if (date === today) {
+			return fail(400, { error: "Cannot edit today's game" });
+		}
+
+		if (position < 1 || position > 3) {
+			return fail(400, { error: 'Position must be 1, 2, or 3' });
+		}
+
+		const updateData: Record<string, null> = {};
+		if (position === 1) updateData.goal1Id = null;
+		if (position === 2) updateData.goal2Id = null;
+		if (position === 3) updateData.goal3Id = null;
+
+		await db.update(dailyGames).set(updateData).where(eq(dailyGames.id, gameId));
+
+		return { success: true };
+	},
+
+	autoFillGame: async ({ request }) => {
+		const formData = await request.formData();
+		const gameId = formData.get('gameId') as string;
+		const date = formData.get('date') as string;
+
+		if (!gameId || !date) {
+			return fail(400, { error: 'Missing required fields' });
+		}
+
+		// Prevent editing today's game
+		const today = new Date().toISOString().split('T')[0];
+		if (date === today) {
+			return fail(400, { error: "Cannot edit today's game" });
+		}
+
+		// Get the existing game
+		const existingGame = await db
+			.select()
+			.from(dailyGames)
+			.where(eq(dailyGames.id, gameId))
+			.get();
+
+		if (!existingGame) {
+			return fail(404, { error: 'Game not found' });
+		}
+
+		// Find which slots are empty
+		const usedIds: string[] = [];
+		if (existingGame.goal1Id) usedIds.push(existingGame.goal1Id);
+		if (existingGame.goal2Id) usedIds.push(existingGame.goal2Id);
+		if (existingGame.goal3Id) usedIds.push(existingGame.goal3Id);
+
+		const emptySlots = 3 - usedIds.length;
+		if (emptySlots === 0) {
+			return fail(400, { error: 'All slots are already filled' });
+		}
+
+		// Get random approved goals to fill empty slots
+		const availableForAutoFill = await db
+			.select({ id: goals.id })
+			.from(goals)
+			.where(
+				and(
+					eq(goals.status, 'approved'),
+					usedIds.length > 0 ? notInArray(goals.id, usedIds) : sql`1=1`
+				)
+			)
+			.orderBy(sql`RANDOM()`)
+			.limit(emptySlots);
+
+		if (availableForAutoFill.length < emptySlots) {
+			return fail(400, { error: 'Not enough approved goals to auto-fill' });
+		}
+
+		const autoFillIds = availableForAutoFill.map((g) => g.id);
+		let autoFillIndex = 0;
+
+		const updateData: Record<string, string> = {};
+		if (!existingGame.goal1Id) updateData.goal1Id = autoFillIds[autoFillIndex++];
+		if (!existingGame.goal2Id) updateData.goal2Id = autoFillIds[autoFillIndex++];
+		if (!existingGame.goal3Id) updateData.goal3Id = autoFillIds[autoFillIndex++];
+
+		await db.update(dailyGames).set(updateData).where(eq(dailyGames.id, gameId));
+
+		return { success: true, autoFilled: true };
+	},
+
 	createDailyGame: async ({ request }) => {
 		const formData = await request.formData();
 		const date = formData.get('date') as string;

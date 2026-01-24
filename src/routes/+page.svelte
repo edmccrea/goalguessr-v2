@@ -320,7 +320,7 @@
 						class="group bg-surface border border-border rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/20"
 						in:fly={{ y: 40, duration: 600, delay: feature.delay, easing: cubicOut }}
 					>
-						<div class="text-3xl mb-4 transition-transform group-hover:scale-110">{feature.emoji}</div>
+						<div class="w-12 h-12 flex items-center justify-center text-3xl mb-4 transition-transform group-hover:scale-110">{feature.emoji}</div>
 						<h3 class="font-bold text-lg mb-2">{feature.title}</h3>
 						<p class="text-text-muted leading-relaxed">{feature.desc}</p>
 					</div>

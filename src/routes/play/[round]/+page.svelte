@@ -131,7 +131,7 @@
 				<div>
 					<div class="flex items-center gap-3 mb-2">
 						<span class="text-sm font-medium text-text-muted">Round</span>
-						<div class="flex items-center gap-1">
+						<div class="flex items-center gap-2">
 							{#each [1, 2, 3] as round}
 								<div
 									class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all {round < data.roundNumber

@@ -3,7 +3,7 @@ import { redirect } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { gameResults, guesses } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { getTodaysDailyGame, getOrCreateGameResult, getGuessesForGame, clearAllGameData } from '$lib/server/game';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -49,7 +49,7 @@ export const actions: Actions = {
 		const gameResult = await db
 			.select()
 			.from(gameResults)
-			.where(eq(gameResults.sessionId, locals.sessionId))
+			.where(and(eq(gameResults.sessionId, locals.sessionId), eq(gameResults.dailyGameId, dailyGame.id)))
 			.get();
 
 		if (gameResult) {

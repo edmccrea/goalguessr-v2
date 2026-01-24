@@ -1,7 +1,17 @@
 <script lang="ts">
 	import Pitch from '../animation/Pitch.svelte';
 	import Ball from '../animation/Ball.svelte';
+	import FlagSelector from './FlagSelector.svelte';
 	import { editorState } from '$lib/editor-state.svelte';
+
+	// Add first player state
+	let isAddingFirstPlayer = $state(false);
+
+	function addFirstPlayer(imageUrl?: string) {
+		const id = editorState.addPlayer(imageUrl || undefined);
+		editorState.selectedPlayerId = id;
+		isAddingFirstPlayer = false;
+	}
 
 	let svgElement: SVGSVGElement | undefined = $state();
 	let draggingId: string | null = $state(null);
@@ -639,12 +649,38 @@
 		</Pitch>
 	</svg>
 
-	<!-- Instructions overlay -->
+	<!-- Empty state overlay -->
 	{#if players.length === 0}
 		<div
-			class="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20 rounded-xl"
+			class="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-xl"
 		>
-			<p class="text-white text-lg font-medium">Add players using the controls below</p>
+			<div class="flex flex-col items-center gap-4 bg-surface/95 backdrop-blur-sm px-6 py-5 rounded-xl shadow-lg border border-border">
+				<div class="flex flex-col items-center gap-1">
+					<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+						<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+						<circle cx="9" cy="7" r="4"/>
+						<path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+					</svg>
+					<p class="text-text font-medium">Add your first player to begin</p>
+				</div>
+
+				{#if isAddingFirstPlayer}
+					<FlagSelector
+						onselect={(url) => addFirstPlayer(url)}
+						oncancel={() => (isAddingFirstPlayer = false)}
+					/>
+				{:else}
+					<button
+						onclick={() => (isAddingFirstPlayer = true)}
+						class="bg-primary hover:bg-primary-hover text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow flex items-center gap-2"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+						</svg>
+						Add Player
+					</button>
+				{/if}
+			</div>
 		</div>
 	{/if}
 </div>

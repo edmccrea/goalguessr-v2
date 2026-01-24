@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { dev } from '$app/environment';
 
 	let user = $derived(page.data.user);
 	let mobileMenuOpen = $state(false);
@@ -72,6 +73,17 @@
 						Admin
 					</a>
 				{/if}
+				{#if dev}
+					<a
+						href="/play?dev"
+						class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-warning hover:text-warning hover:bg-warning/10"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-70">
+							<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+						</svg>
+						Dev
+					</a>
+				{/if}
 			{:else}
 				<a
 					href="/auth/login"
@@ -140,6 +152,15 @@
 						class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors {isActive('/admin') ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-text hover:bg-surface-dim'}"
 					>
 						Admin
+					</a>
+				{/if}
+				{#if dev}
+					<a
+						href="/play?dev"
+						onclick={() => mobileMenuOpen = false}
+						class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors text-warning hover:bg-warning/10"
+					>
+						Dev Tools
 					</a>
 				{/if}
 				{#if !user}
