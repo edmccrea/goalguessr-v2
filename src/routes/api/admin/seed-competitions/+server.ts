@@ -116,7 +116,16 @@ const competitionData = [
 	{ name: 'K League 1', shortName: 'K League', type: 'league' as const, country: 'South Korea', isInternational: false }
 ];
 
-export const POST: RequestHandler = async () => {
+export const POST: RequestHandler = async ({ locals }) => {
+	// Require authenticated admin user
+	if (!locals.user) {
+		return json({ error: 'Authentication required' }, { status: 401 });
+	}
+
+	if (!locals.user.isAdmin) {
+		return json({ error: 'Admin access required' }, { status: 403 });
+	}
+
 	try {
 		let inserted = 0;
 

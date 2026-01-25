@@ -1,4 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { sessions, users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -23,8 +24,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.cookies.set(SESSION_COOKIE, sessionId, {
 			path: '/',
 			httpOnly: true,
+			secure: !dev,
 			sameSite: 'lax',
-			maxAge: 60 * 60 * 24 * 365 // 1 year
+			maxAge: 60 * 60 * 24 * 30 // 30 days
 		});
 
 		event.locals.sessionId = sessionId;
@@ -52,6 +54,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 				event.locals.user = null;
 			}
 		}
+
+		// Refresh cookie expiry on each request (sliding expiration)
+		event.cookies.set(SESSION_COOKIE, sessionId, {
+			path: '/',
+			httpOnly: true,
+			secure: !dev,
+			sameSite: 'lax',
+			maxAge: 60 * 60 * 24 * 30 // 30 days
+		});
 	}
 
 	return resolve(event);

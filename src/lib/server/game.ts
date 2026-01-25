@@ -1,3 +1,4 @@
+import { dev } from '$app/environment';
 import { db } from './db';
 import { dailyGames, goals, gameResults, guesses } from './db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -12,7 +13,8 @@ function getToday(): string {
 
 /**
  * Get or create today's daily game
- * For now, uses sample goals. In production, would select from approved goals.
+ * Returns null if no approved goals are available (production behavior)
+ * In dev mode, creates sample goals if none exist
  */
 export async function getTodaysDailyGame() {
 	const today = getToday();
@@ -21,13 +23,18 @@ export async function getTodaysDailyGame() {
 	let dailyGame = await db.select().from(dailyGames).where(eq(dailyGames.date, today)).get();
 
 	if (!dailyGame) {
-		// Get approved goals (or create sample ones if none exist)
+		// Get approved goals
 		let availableGoals = await db.select().from(goals).where(eq(goals.status, 'approved')).all();
 
-		// If no approved goals, create sample goals for testing
-		if (availableGoals.length < 3) {
+		// In dev mode only, create sample goals if none exist
+		if (dev && availableGoals.length < 3) {
 			await createSampleGoals();
 			availableGoals = await db.select().from(goals).where(eq(goals.status, 'approved')).all();
+		}
+
+		// If still no approved goals, return null (no game available)
+		if (availableGoals.length === 0) {
+			return null;
 		}
 
 		// Select 3 goals for today (just take first 3 for now)
@@ -46,7 +53,7 @@ export async function getTodaysDailyGame() {
 		dailyGame = await db.select().from(dailyGames).where(eq(dailyGames.id, dailyGameId)).get();
 	}
 
-	return dailyGame!;
+	return dailyGame ?? null;
 }
 
 /**
@@ -158,6 +165,39 @@ export async function saveGuess(
  */
 export async function getGuessesForGame(gameResultId: string) {
 	return db.select().from(guesses).where(eq(guesses.gameResultId, gameResultId)).all();
+}
+
+/**
+ * Get or set the start time for a specific round.
+ * If the round hasn't been started yet, records the current time.
+ * Returns the round start timestamp.
+ */
+export async function getOrSetRoundStartTime(gameResultId: string, roundNumber: number): Promise<Date> {
+	const result = await db
+		.select()
+		.from(gameResults)
+		.where(eq(gameResults.id, gameResultId))
+		.get();
+
+	if (!result) {
+		throw new Error('Game result not found');
+	}
+
+	const startTimeField = roundNumber === 1 ? 'round1StartedAt' : roundNumber === 2 ? 'round2StartedAt' : 'round3StartedAt';
+	const existingStartTime = result[startTimeField];
+
+	if (existingStartTime) {
+		return existingStartTime;
+	}
+
+	// Round hasn't been started yet, set the start time
+	const now = new Date();
+	await db
+		.update(gameResults)
+		.set({ [startTimeField]: now })
+		.where(eq(gameResults.id, gameResultId));
+
+	return now;
 }
 
 /**

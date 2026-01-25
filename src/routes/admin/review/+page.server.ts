@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { goals, users } from '$lib/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
+import { processGoalEntities } from '$lib/server/sync';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -56,6 +57,25 @@ export const actions: Actions = {
 		if (!goalId) {
 			return fail(400, { error: 'Goal ID required' });
 		}
+
+		// Fetch the goal data to process entities
+		const goal = await db
+			.select({
+				team: goals.team,
+				scorer: goals.scorer,
+				opponent: goals.opponent,
+				competition: goals.competition
+			})
+			.from(goals)
+			.where(eq(goals.id, goalId))
+			.get();
+
+		if (!goal) {
+			return fail(404, { error: 'Goal not found' });
+		}
+
+		// Add any missing teams, players, or competitions to the database
+		await processGoalEntities(goal);
 
 		await db
 			.update(goals)

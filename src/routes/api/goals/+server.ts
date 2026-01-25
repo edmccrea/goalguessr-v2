@@ -70,7 +70,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			isInternational: body.isInternational ?? false,
 			animationData: body.animationData,
 			status: 'pending',
-			submittedBy: locals.user.id
+			submittedBy: locals.user.id,
+			submittedByUsername: locals.user.username
 		});
 
 		return json({ success: true, id }, { status: 201 });

@@ -13,6 +13,56 @@
 	const metadata = $derived(editorState.metadata);
 	const validation = $derived(editorState.validate());
 
+	// Duplicate check state
+	interface DuplicateMatch {
+		id: string;
+		team: string;
+		scorer: string;
+		year: number;
+		competition: string | null;
+		opponent: string | null;
+		status: string;
+		submittedByUsername: string | null;
+	}
+
+	let isCheckingDuplicate = $state(false);
+	let duplicateResult = $state<{ exists: boolean; matches: DuplicateMatch[]; message: string } | null>(null);
+	let duplicateError = $state<string | null>(null);
+
+	// Can check for duplicates when team, scorer, and year are filled
+	const canCheckDuplicate = $derived(
+		metadata.team?.trim() && metadata.scorer?.trim() && metadata.year
+	);
+
+	async function checkForDuplicates() {
+		if (!canCheckDuplicate) return;
+
+		isCheckingDuplicate = true;
+		duplicateResult = null;
+		duplicateError = null;
+
+		try {
+			const params = new URLSearchParams({
+				team: metadata.team.trim(),
+				scorer: metadata.scorer.trim(),
+				year: String(metadata.year)
+			});
+
+			const res = await fetch(`/api/goals/check-duplicate?${params}`);
+			const data = await res.json();
+
+			if (!res.ok) {
+				throw new Error(data.error || 'Failed to check for duplicates');
+			}
+
+			duplicateResult = data;
+		} catch (err) {
+			duplicateError = err instanceof Error ? err.message : 'Failed to check for duplicates';
+		} finally {
+			isCheckingDuplicate = false;
+		}
+	}
+
 	// Suggestion state for comboboxes
 	interface Suggestion {
 		id: string;
@@ -150,6 +200,83 @@
 				suggestions={scorerSuggestions}
 				onSearch={searchScorers}
 			/>
+		</div>
+
+		<!-- Duplicate Check Section -->
+		<div class="pt-3 pb-1">
+			<button
+				type="button"
+				onclick={checkForDuplicates}
+				disabled={!canCheckDuplicate || isCheckingDuplicate}
+				class="w-full flex items-center justify-center gap-2 bg-surface-dim hover:bg-border/50 border border-border text-text-muted hover:text-text px-4 py-2.5 rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+			>
+				{#if isCheckingDuplicate}
+					<svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+					</svg>
+					Checking...
+				{:else}
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="11" cy="11" r="8"/>
+						<path d="m21 21-4.3-4.3"/>
+					</svg>
+					Check for Existing Goals
+				{/if}
+			</button>
+
+			{#if duplicateError}
+				<div class="mt-3 flex items-start gap-2 bg-error-light border border-error/20 rounded-xl p-3 text-sm">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-error flex-shrink-0 mt-0.5">
+						<circle cx="12" cy="12" r="10"/>
+						<line x1="12" y1="8" x2="12" y2="12"/>
+						<line x1="12" y1="16" x2="12.01" y2="16"/>
+					</svg>
+					<span class="text-error">{duplicateError}</span>
+				</div>
+			{/if}
+
+			{#if duplicateResult}
+				{#if duplicateResult.exists}
+					<div class="mt-3 bg-warning/10 border border-warning/30 rounded-xl p-3">
+						<div class="flex items-start gap-2 mb-2">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-warning flex-shrink-0 mt-0.5">
+								<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>
+								<line x1="12" y1="9" x2="12" y2="13"/>
+								<line x1="12" y1="17" x2="12.01" y2="17"/>
+							</svg>
+							<span class="text-sm font-medium text-warning">{duplicateResult.message}</span>
+						</div>
+						<div class="space-y-2 ml-6">
+							{#each duplicateResult.matches as match}
+								<div class="text-xs bg-surface rounded-lg p-2 border border-border">
+									<div class="font-medium">{match.team} vs {match.opponent || 'Unknown'} ({match.year})</div>
+									<div class="text-text-muted">
+										Scorer: {match.scorer}
+										{#if match.competition}
+											&middot; {match.competition}
+										{/if}
+									</div>
+									<div class="text-text-muted mt-1">
+										Status: <span class="capitalize">{match.status}</span>
+										{#if match.submittedByUsername}
+											&middot; by {match.submittedByUsername}
+										{/if}
+									</div>
+								</div>
+							{/each}
+						</div>
+						<p class="text-xs text-text-muted mt-2 ml-6">You can still submit if this is a different version of the goal.</p>
+					</div>
+				{:else}
+					<div class="mt-3 flex items-start gap-2 bg-success/10 border border-success/30 rounded-xl p-3 text-sm">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-success flex-shrink-0 mt-0.5">
+							<polyline points="20 6 9 17 4 12"/>
+						</svg>
+						<span class="text-success">{duplicateResult.message}</span>
+					</div>
+				{/if}
+			{/if}
 		</div>
 
 		<div>

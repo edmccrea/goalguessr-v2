@@ -1,16 +1,44 @@
-import { db } from './db';
-import { teams, teamAliases, players, playerAliases, playerTeams, competitions, syncLogs } from './db/schema';
-import { eq, and } from 'drizzle-orm';
+/**
+ * Database Seeding Script
+ *
+ * Usage:
+ *   npx tsx scripts/seed.ts
+ *
+ * This script populates the database with teams and players data.
+ * It's idempotent - running it multiple times won't create duplicates.
+ *
+ * For production, set DATABASE_URL and DATABASE_AUTH_TOKEN environment variables.
+ */
+
+import { createClient } from '@libsql/client';
+import { drizzle } from 'drizzle-orm/libsql';
+import { eq } from 'drizzle-orm';
+import {
+	teams,
+	teamAliases,
+	players,
+	playerAliases,
+	playerTeams,
+	syncLogs,
+	competitions
+} from '../src/lib/server/db/schema';
+
+// Database connection
+const client = createClient({
+	url: process.env.DATABASE_URL ?? 'file:local.db',
+	authToken: process.env.DATABASE_AUTH_TOKEN
+});
+
+const db = drizzle(client);
 
 function generateId(): string {
 	return crypto.randomUUID();
 }
 
 // =============================================================================
-// SAMPLE TEAMS DATA
+// TEAMS DATA
 // =============================================================================
 
-// Premier League
 const PREMIER_LEAGUE_TEAMS = [
 	{ name: 'Manchester United', shortName: 'Man Utd', code: 'MUN', country: 'England', aliases: ['man u', 'manu', 'mufc', 'red devils', 'united'] },
 	{ name: 'Manchester City', shortName: 'Man City', code: 'MCI', country: 'England', aliases: ['city', 'mcfc', 'cityzens'] },
@@ -34,7 +62,6 @@ const PREMIER_LEAGUE_TEAMS = [
 	{ name: 'Southampton', shortName: 'Southampton', code: 'SOU', country: 'England', aliases: ['southampton', 'saints'] },
 ];
 
-// La Liga
 const LA_LIGA_TEAMS = [
 	{ name: 'Real Madrid', shortName: 'Real Madrid', code: 'RMA', country: 'Spain', aliases: ['real', 'rmcf', 'los blancos', 'madrid'] },
 	{ name: 'Barcelona', shortName: 'Barcelona', code: 'BAR', country: 'Spain', aliases: ['barca', 'fcb', 'blaugrana'] },
@@ -48,7 +75,6 @@ const LA_LIGA_TEAMS = [
 	{ name: 'Deportivo La Coruna', shortName: 'Deportivo', code: 'DEP', country: 'Spain', aliases: ['deportivo', 'depor', 'superdepor'] },
 ];
 
-// Bundesliga
 const BUNDESLIGA_TEAMS = [
 	{ name: 'Bayern Munich', shortName: 'Bayern', code: 'BAY', country: 'Germany', aliases: ['bayern', 'bayern munchen', 'fcb munich', 'bayern münchen'] },
 	{ name: 'Borussia Dortmund', shortName: 'Dortmund', code: 'BVB', country: 'Germany', aliases: ['dortmund', 'bvb', 'die schwarzgelben'] },
@@ -64,7 +90,6 @@ const BUNDESLIGA_TEAMS = [
 	{ name: '1. FC Koln', shortName: 'Koln', code: 'KOE', country: 'Germany', aliases: ['koln', 'cologne', 'fc köln', 'effzeh'] },
 ];
 
-// Serie A
 const SERIE_A_TEAMS = [
 	{ name: 'Juventus', shortName: 'Juventus', code: 'JUV', country: 'Italy', aliases: ['juve', 'old lady', 'bianconeri'] },
 	{ name: 'AC Milan', shortName: 'Milan', code: 'ACM', country: 'Italy', aliases: ['milan', 'rossoneri', 'ac milan'] },
@@ -80,7 +105,6 @@ const SERIE_A_TEAMS = [
 	{ name: 'Genoa', shortName: 'Genoa', code: 'GEN', country: 'Italy', aliases: ['genoa', 'grifone'] },
 ];
 
-// Ligue 1
 const LIGUE_1_TEAMS = [
 	{ name: 'Paris Saint-Germain', shortName: 'PSG', code: 'PSG', country: 'France', aliases: ['psg', 'paris', 'paris sg'] },
 	{ name: 'Olympique de Marseille', shortName: 'Marseille', code: 'OM', country: 'France', aliases: ['marseille', 'om', 'olympique marseille'] },
@@ -95,7 +119,6 @@ const LIGUE_1_TEAMS = [
 	{ name: 'Nantes', shortName: 'Nantes', code: 'NAN', country: 'France', aliases: ['nantes', 'fcn', 'les canaris'] },
 ];
 
-// Other European clubs
 const OTHER_EUROPEAN_TEAMS = [
 	{ name: 'Ajax', shortName: 'Ajax', code: 'AJA', country: 'Netherlands', aliases: ['ajax', 'afc ajax', 'godenzonen'] },
 	{ name: 'PSV Eindhoven', shortName: 'PSV', code: 'PSV', country: 'Netherlands', aliases: ['psv', 'eindhoven'] },
@@ -120,7 +143,6 @@ const OTHER_EUROPEAN_TEAMS = [
 	{ name: 'Zenit St Petersburg', shortName: 'Zenit', code: 'ZEN', country: 'Russia', aliases: ['zenit', 'st petersburg'] },
 ];
 
-// South American clubs
 const SOUTH_AMERICAN_TEAMS = [
 	{ name: 'Boca Juniors', shortName: 'Boca', code: 'BOC', country: 'Argentina', aliases: ['boca', 'boca juniors', 'xeneizes'] },
 	{ name: 'River Plate', shortName: 'River', code: 'RIV', country: 'Argentina', aliases: ['river', 'river plate', 'millonarios'] },
@@ -132,7 +154,6 @@ const SOUTH_AMERICAN_TEAMS = [
 	{ name: 'Gremio', shortName: 'Gremio', code: 'GRE', country: 'Brazil', aliases: ['gremio', 'tricolor gaucho', 'imortal'] },
 ];
 
-// National teams
 const NATIONAL_TEAMS = [
 	{ name: 'Argentina', shortName: 'Argentina', code: 'ARG', country: 'Argentina', isNationalTeam: true, aliases: ['albiceleste', 'la seleccion'] },
 	{ name: 'Brazil', shortName: 'Brazil', code: 'BRA', country: 'Brazil', isNationalTeam: true, aliases: ['brasil', 'selecao', 'canarinho'] },
@@ -179,8 +200,7 @@ const NATIONAL_TEAMS = [
 	{ name: 'Czechoslovakia', shortName: 'Czechoslovakia', code: 'TCH', country: 'Czechoslovakia', isNationalTeam: true, aliases: [] },
 ];
 
-// Combine all teams
-const SAMPLE_TEAMS = [
+const ALL_TEAMS = [
 	...PREMIER_LEAGUE_TEAMS,
 	...LA_LIGA_TEAMS,
 	...BUNDESLIGA_TEAMS,
@@ -192,13 +212,11 @@ const SAMPLE_TEAMS = [
 ];
 
 // =============================================================================
-// SAMPLE PLAYERS DATA
+// PLAYERS DATA
 // =============================================================================
 
 const SAMPLE_PLAYERS = [
-	// =========================================================================
 	// ALL-TIME LEGENDS (Pre-1990)
-	// =========================================================================
 	{ name: 'Pele', firstName: 'Edson Arantes', lastName: 'do Nascimento', nationality: 'Brazil', aliases: ['pele', 'o rei', 'edson arantes'], teams: ['Santos', 'Brazil'] },
 	{ name: 'Diego Maradona', firstName: 'Diego', lastName: 'Maradona', nationality: 'Argentina', aliases: ['maradona', 'el pibe de oro', 'diego'], teams: ['Barcelona', 'Napoli', 'Argentina', 'Boca Juniors'] },
 	{ name: 'Johan Cruyff', firstName: 'Johan', lastName: 'Cruyff', nationality: 'Netherlands', aliases: ['cruyff', 'cruijff', 'el flaco'], teams: ['Ajax', 'Barcelona', 'Netherlands'] },
@@ -227,9 +245,7 @@ const SAMPLE_PLAYERS = [
 	{ name: 'Kevin Keegan', firstName: 'Kevin', lastName: 'Keegan', nationality: 'England', aliases: ['keegan', 'mighty mouse'], teams: ['Liverpool', 'Hamburger SV', 'England'] },
 	{ name: 'Gary Lineker', firstName: 'Gary', lastName: 'Lineker', nationality: 'England', aliases: ['lineker'], teams: ['Tottenham Hotspur', 'Barcelona', 'Leicester City', 'England'] },
 
-	// =========================================================================
 	// 1990s LEGENDS
-	// =========================================================================
 	{ name: 'Ronaldo Nazario', firstName: 'Ronaldo', lastName: 'Luis Nazario de Lima', nationality: 'Brazil', aliases: ['ronaldo', 'r9', 'ronaldo brazil', 'ronaldo fenomeno', 'il fenomeno', 'o fenomeno'], teams: ['Real Madrid', 'Inter Milan', 'Barcelona', 'AC Milan', 'Brazil'] },
 	{ name: 'Zinedine Zidane', firstName: 'Zinedine', lastName: 'Zidane', nationality: 'France', aliases: ['zidane', 'zizou'], teams: ['Real Madrid', 'Juventus', 'France'] },
 	{ name: 'Roberto Baggio', firstName: 'Roberto', lastName: 'Baggio', nationality: 'Italy', aliases: ['baggio', 'il divin codino', 'divine ponytail', 'roby'], teams: ['Juventus', 'AC Milan', 'Inter Milan', 'Fiorentina', 'Italy'] },
@@ -263,9 +279,7 @@ const SAMPLE_PLAYERS = [
 	{ name: 'Paul Scholes', firstName: 'Paul', lastName: 'Scholes', nationality: 'England', aliases: ['scholes', 'scholesy', 'ginger prince'], teams: ['Manchester United', 'England'] },
 	{ name: 'Ryan Giggs', firstName: 'Ryan', lastName: 'Giggs', nationality: 'Wales', aliases: ['giggs', 'giggsy'], teams: ['Manchester United', 'Wales'] },
 
-	// =========================================================================
 	// 2000s STARS
-	// =========================================================================
 	{ name: 'Ronaldinho', firstName: 'Ronaldo', lastName: 'de Assis Moreira', nationality: 'Brazil', aliases: ['ronaldinho', 'ronaldinho gaucho', 'dinho', 'r10'], teams: ['Barcelona', 'AC Milan', 'Paris Saint-Germain', 'Gremio', 'Flamengo', 'Brazil'] },
 	{ name: 'Kaka', firstName: 'Ricardo', lastName: 'Izecson dos Santos Leite', nationality: 'Brazil', aliases: ['kaka', 'ricky'], teams: ['AC Milan', 'Real Madrid', 'Sao Paulo', 'Brazil'] },
 	{ name: 'Thierry Henry', firstName: 'Thierry', lastName: 'Henry', nationality: 'France', aliases: ['henry', 'titi', 'king henry', 'va va voom'], teams: ['Arsenal', 'Barcelona', 'France'] },
@@ -311,9 +325,7 @@ const SAMPLE_PLAYERS = [
 	{ name: 'Claude Makelele', firstName: 'Claude', lastName: 'Makelele', nationality: 'France', aliases: ['makelele'], teams: ['Chelsea', 'Real Madrid', 'France'] },
 	{ name: 'Lilian Thuram', firstName: 'Lilian', lastName: 'Thuram', nationality: 'France', aliases: ['thuram'], teams: ['Juventus', 'Barcelona', 'Parma', 'France'] },
 
-	// =========================================================================
 	// 2010s & MODERN STARS
-	// =========================================================================
 	{ name: 'Cristiano Ronaldo', firstName: 'Cristiano', lastName: 'Ronaldo', nationality: 'Portugal', aliases: ['ronaldo', 'cr7', 'cristiano', 'cr'], teams: ['Manchester United', 'Real Madrid', 'Juventus', 'Portugal'] },
 	{ name: 'Lionel Messi', firstName: 'Lionel', lastName: 'Messi', nationality: 'Argentina', aliases: ['messi', 'leo messi', 'la pulga', 'leo', 'goat'], teams: ['Barcelona', 'Paris Saint-Germain', 'Argentina'] },
 	{ name: 'Neymar', firstName: 'Neymar', lastName: 'da Silva Santos Junior', nationality: 'Brazil', aliases: ['neymar', 'ney', 'njr'], teams: ['Paris Saint-Germain', 'Barcelona', 'Santos', 'Brazil'] },
@@ -360,9 +372,7 @@ const SAMPLE_PLAYERS = [
 	{ name: 'Philipp Lahm', firstName: 'Philipp', lastName: 'Lahm', nationality: 'Germany', aliases: ['lahm', 'die biene'], teams: ['Bayern Munich', 'Germany'] },
 	{ name: 'Bastian Schweinsteiger', firstName: 'Bastian', lastName: 'Schweinsteiger', nationality: 'Germany', aliases: ['schweinsteiger', 'schweini', 'basti'], teams: ['Bayern Munich', 'Manchester United', 'Germany'] },
 
-	// =========================================================================
 	// CURRENT / EMERGING STARS (2020s)
-	// =========================================================================
 	{ name: 'Vinicius Junior', firstName: 'Vinicius', lastName: 'Jose Paixao de Oliveira Junior', nationality: 'Brazil', aliases: ['vinicius', 'vini jr', 'vinicius jr'], teams: ['Real Madrid', 'Brazil'] },
 	{ name: 'Jude Bellingham', firstName: 'Jude', lastName: 'Bellingham', nationality: 'England', aliases: ['bellingham', 'jude'], teams: ['Real Madrid', 'Borussia Dortmund', 'England'] },
 	{ name: 'Phil Foden', firstName: 'Phil', lastName: 'Foden', nationality: 'England', aliases: ['foden', 'stockport iniesta'], teams: ['Manchester City', 'England'] },
@@ -389,14 +399,17 @@ const SAMPLE_PLAYERS = [
 	{ name: 'Enzo Fernandez', firstName: 'Enzo', lastName: 'Fernandez', nationality: 'Argentina', aliases: ['enzo', 'enzo fernandez'], teams: ['Chelsea', 'Benfica', 'River Plate', 'Argentina'] },
 ];
 
-/**
- * Sync sample data to the database for testing
- */
-export async function syncSampleData(): Promise<{ teams: number; players: number }> {
+// =============================================================================
+// SEEDING FUNCTION
+// =============================================================================
+
+async function seed() {
+	console.log('Starting database seed...\n');
+
 	const syncId = generateId();
 	await db.insert(syncLogs).values({
 		id: syncId,
-		syncType: 'sample_data',
+		syncType: 'seed_script',
 		status: 'started'
 	});
 
@@ -406,7 +419,8 @@ export async function syncSampleData(): Promise<{ teams: number; players: number
 		const teamIdMap = new Map<string, string>();
 
 		// Insert teams
-		for (const teamData of SAMPLE_TEAMS) {
+		console.log('Seeding teams...');
+		for (const teamData of ALL_TEAMS) {
 			const existingTeam = await db
 				.select()
 				.from(teams)
@@ -425,7 +439,7 @@ export async function syncSampleData(): Promise<{ teams: number; players: number
 					shortName: teamData.shortName,
 					code: teamData.code,
 					country: teamData.country,
-					isNationalTeam: (teamData as { isNationalTeam?: boolean }).isNationalTeam ?? false
+					isNationalTeam: (teamData as any).isNationalTeam ?? false
 				});
 				teamsProcessed++;
 
@@ -441,8 +455,10 @@ export async function syncSampleData(): Promise<{ teams: number; players: number
 
 			teamIdMap.set(teamData.name, teamId);
 		}
+		console.log(`  ✓ Processed ${teamsProcessed} new teams (${ALL_TEAMS.length} total)\n`);
 
 		// Insert players
+		console.log('Seeding players...');
 		for (const playerData of SAMPLE_PLAYERS) {
 			const existingPlayer = await db
 				.select()
@@ -487,6 +503,7 @@ export async function syncSampleData(): Promise<{ teams: number; players: number
 				}
 			}
 		}
+		console.log(`  ✓ Processed ${playersProcessed} new players (${SAMPLE_PLAYERS.length} total)\n`);
 
 		await db
 			.update(syncLogs)
@@ -496,7 +513,9 @@ export async function syncSampleData(): Promise<{ teams: number; players: number
 			})
 			.where(eq(syncLogs.id, syncId));
 
-		return { teams: teamsProcessed, players: playersProcessed };
+		console.log('Seed completed successfully!');
+		console.log(`  Teams: ${teamsProcessed} new`);
+		console.log(`  Players: ${playersProcessed} new`);
 	} catch (error) {
 		await db
 			.update(syncLogs)
@@ -505,241 +524,10 @@ export async function syncSampleData(): Promise<{ teams: number; players: number
 				errorMessage: String(error)
 			})
 			.where(eq(syncLogs.id, syncId));
-		throw error;
+		console.error('Seed failed:', error);
+		process.exit(1);
 	}
 }
 
-/**
- * Get sync status
- */
-export async function getSyncStatus() {
-	const latestSync = await db
-		.select()
-		.from(syncLogs)
-		.orderBy(syncLogs.createdAt)
-		.limit(1)
-		.get();
-
-	const teamCount = await db.select().from(teams).all();
-	const playerCount = await db.select().from(players).all();
-
-	return {
-		lastSync: latestSync,
-		teamCount: teamCount.length,
-		playerCount: playerCount.length
-	};
-}
-
-// =============================================================================
-// ENTITY CREATION HELPERS (for goal approval)
-// =============================================================================
-
-/**
- * Find a team by name (case-insensitive) or alias, or create a new one if not found.
- * Returns the team ID.
- */
-export async function findOrCreateTeam(name: string): Promise<string> {
-	const normalizedName = name.trim();
-	const lowerName = normalizedName.toLowerCase();
-
-	// First, check if team exists by exact name (case-insensitive)
-	const existingTeam = await db
-		.select()
-		.from(teams)
-		.where(eq(teams.name, normalizedName))
-		.get();
-
-	if (existingTeam) {
-		return existingTeam.id;
-	}
-
-	// Check by alias
-	const aliasMatch = await db
-		.select({ teamId: teamAliases.teamId })
-		.from(teamAliases)
-		.where(eq(teamAliases.alias, lowerName))
-		.get();
-
-	if (aliasMatch) {
-		return aliasMatch.teamId;
-	}
-
-	// Create new team
-	const teamId = generateId();
-	await db.insert(teams).values({
-		id: teamId,
-		name: normalizedName,
-		shortName: normalizedName,
-		isNationalTeam: false
-	});
-
-	// Add the name as an alias for better future matching
-	await db.insert(teamAliases).values({
-		id: generateId(),
-		teamId,
-		alias: lowerName
-	});
-
-	return teamId;
-}
-
-/**
- * Find a player by name (case-insensitive) or alias, or create a new one if not found.
- * Optionally links the player to a team.
- * Returns the player ID.
- */
-export async function findOrCreatePlayer(
-	name: string,
-	teamId?: string
-): Promise<string> {
-	const normalizedName = name.trim();
-	const lowerName = normalizedName.toLowerCase();
-
-	// First, check if player exists by exact name (case-insensitive)
-	const existingPlayer = await db
-		.select()
-		.from(players)
-		.where(eq(players.name, normalizedName))
-		.get();
-
-	if (existingPlayer) {
-		// If team provided, ensure player-team link exists
-		if (teamId) {
-			await ensurePlayerTeamLink(existingPlayer.id, teamId);
-		}
-		return existingPlayer.id;
-	}
-
-	// Check by alias
-	const aliasMatch = await db
-		.select({ playerId: playerAliases.playerId })
-		.from(playerAliases)
-		.where(eq(playerAliases.alias, lowerName))
-		.get();
-
-	if (aliasMatch) {
-		// If team provided, ensure player-team link exists
-		if (teamId) {
-			await ensurePlayerTeamLink(aliasMatch.playerId, teamId);
-		}
-		return aliasMatch.playerId;
-	}
-
-	// Create new player
-	const playerId = generateId();
-
-	// Try to extract first/last name
-	const nameParts = normalizedName.split(' ');
-	const firstName = nameParts.length > 1 ? nameParts[0] : null;
-	const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : normalizedName;
-
-	await db.insert(players).values({
-		id: playerId,
-		name: normalizedName,
-		firstName,
-		lastName
-	});
-
-	// Add the name as an alias for better future matching
-	await db.insert(playerAliases).values({
-		id: generateId(),
-		playerId,
-		alias: lowerName
-	});
-
-	// Also add just the last name as an alias if different
-	if (lastName.toLowerCase() !== lowerName) {
-		await db.insert(playerAliases).values({
-			id: generateId(),
-			playerId,
-			alias: lastName.toLowerCase()
-		});
-	}
-
-	// Link to team if provided
-	if (teamId) {
-		await db.insert(playerTeams).values({
-			id: generateId(),
-			playerId,
-			teamId
-		});
-	}
-
-	return playerId;
-}
-
-/**
- * Ensure a player-team link exists
- */
-async function ensurePlayerTeamLink(playerId: string, teamId: string): Promise<void> {
-	const existingLink = await db
-		.select()
-		.from(playerTeams)
-		.where(and(eq(playerTeams.playerId, playerId), eq(playerTeams.teamId, teamId)))
-		.get();
-
-	if (!existingLink) {
-		await db.insert(playerTeams).values({
-			id: generateId(),
-			playerId,
-			teamId
-		});
-	}
-}
-
-/**
- * Find a competition by name (case-insensitive) or create a new one if not found.
- * Returns the competition ID.
- */
-export async function findOrCreateCompetition(name: string): Promise<string> {
-	const normalizedName = name.trim();
-
-	// Check if competition exists by exact name (case-insensitive)
-	const existingCompetition = await db
-		.select()
-		.from(competitions)
-		.where(eq(competitions.name, normalizedName))
-		.get();
-
-	if (existingCompetition) {
-		return existingCompetition.id;
-	}
-
-	// Create new competition - default to 'cup' type as we can't easily determine
-	const competitionId = generateId();
-	await db.insert(competitions).values({
-		id: competitionId,
-		name: normalizedName,
-		shortName: normalizedName,
-		type: 'cup' // Default type
-	});
-
-	return competitionId;
-}
-
-/**
- * Process entities from a goal when it's approved.
- * Creates any missing teams, players, or competitions in the database.
- */
-export async function processGoalEntities(goal: {
-	team: string;
-	scorer: string;
-	opponent?: string | null;
-	competition?: string | null;
-}): Promise<void> {
-	// Find or create the team
-	const teamId = await findOrCreateTeam(goal.team);
-
-	// Find or create the scorer and link to team
-	await findOrCreatePlayer(goal.scorer, teamId);
-
-	// Find or create the opponent team if provided
-	if (goal.opponent) {
-		await findOrCreateTeam(goal.opponent);
-	}
-
-	// Find or create the competition if provided
-	if (goal.competition) {
-		await findOrCreateCompetition(goal.competition);
-	}
-}
+// Run the seed
+seed().then(() => process.exit(0));

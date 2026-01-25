@@ -1,5 +1,5 @@
 import type { PageServerLoad, Actions } from './$types';
-import { redirect } from '@sveltejs/kit';
+import { redirect, error } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { gameResults, guesses } from '$lib/server/db/schema';
@@ -7,14 +7,22 @@ import { eq, and } from 'drizzle-orm';
 import { getTodaysDailyGame, getOrCreateGameResult, getGuessesForGame, clearAllGameData } from '$lib/server/game';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
+	const dailyGame = await getTodaysDailyGame();
+
+	// No game available - show error page
+	if (!dailyGame) {
+		throw error(503, {
+			message: 'No game available today',
+			details: 'There are no approved goals in the system yet. Check back later!'
+		});
+	}
+
 	// Allow dev tools page to be accessed directly
 	if (url.searchParams.has('dev') && dev) {
-		const dailyGame = await getTodaysDailyGame();
 		const gameResult = await getOrCreateGameResult(locals.sessionId, dailyGame.id);
 		return { isDev: dev };
 	}
 
-	const dailyGame = await getTodaysDailyGame();
 	const gameResult = await getOrCreateGameResult(locals.sessionId, dailyGame.id);
 	const existingGuesses = await getGuessesForGame(gameResult.id);
 
@@ -46,6 +54,10 @@ export const actions: Actions = {
 		}
 
 		const dailyGame = await getTodaysDailyGame();
+		if (!dailyGame) {
+			return { error: 'No game available' };
+		}
+
 		const gameResult = await db
 			.select()
 			.from(gameResults)

@@ -5,8 +5,12 @@
 	import { cubicOut, backOut, elasticOut } from 'svelte/easing';
 	import { Spring } from 'svelte/motion';
 	import { inView } from 'motion';
+	import { PUBLIC_FEATURE_LEADERBOARD } from '$env/static/public';
 	import GoalAnimation from '$lib/components/animation/GoalAnimation.svelte';
 	import { sampleAnimation } from '$lib/sample-animation';
+	import favicon from '$lib/assets/favicon.svg';
+
+	const showLeaderboard = PUBLIC_FEATURE_LEADERBOARD === 'true';
 
 	let mounted = $state(false);
 	let howItWorksVisible = $state(false);
@@ -370,19 +374,15 @@
 	<div class="max-w-5xl mx-auto">
 		<div class="flex flex-col sm:flex-row items-center justify-between gap-6">
 			<div class="flex items-center gap-3">
-				<div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
-						<circle cx="12" cy="12" r="10"/>
-						<path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-						<path d="M2 12h20"/>
-					</svg>
-				</div>
+				<img src={favicon} alt="Goal Guessr" class="w-10 h-10" />
 				<span class="font-bold text-lg">Goal Guessr</span>
 			</div>
 
 			<div class="flex gap-8 text-sm">
 				<a href="/play" class="text-text-muted hover:text-primary transition-colors">Play</a>
-				<a href="/leaderboard" class="text-text-muted hover:text-primary transition-colors">Leaderboard</a>
+				{#if showLeaderboard}
+					<a href="/leaderboard" class="text-text-muted hover:text-primary transition-colors">Leaderboard</a>
+				{/if}
 				<a href="/editor" class="text-text-muted hover:text-primary transition-colors">Create</a>
 				<a href="/profile" class="text-text-muted hover:text-primary transition-colors">Profile</a>
 			</div>

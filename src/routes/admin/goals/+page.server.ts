@@ -2,6 +2,7 @@ import { db } from '$lib/server/db';
 import { goals, users, dailyGames, goalQueue } from '$lib/server/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
+import { processGoalEntities } from '$lib/server/sync';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -96,6 +97,24 @@ export const actions: Actions = {
 
 		if (!['pending', 'approved', 'rejected'].includes(status)) {
 			return fail(400, { error: 'Invalid status' });
+		}
+
+		// If approving, add any missing teams/players/competitions to the database
+		if (status === 'approved') {
+			const goal = await db
+				.select({
+					team: goals.team,
+					scorer: goals.scorer,
+					opponent: goals.opponent,
+					competition: goals.competition
+				})
+				.from(goals)
+				.where(eq(goals.id, goalId))
+				.get();
+
+			if (goal) {
+				await processGoalEntities(goal);
+			}
 		}
 
 		await db

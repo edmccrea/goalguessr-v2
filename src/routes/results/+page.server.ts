@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { redirect } from '@sveltejs/kit';
+import { redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { goals, guesses } from '$lib/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
@@ -87,6 +87,12 @@ async function getCommunityStats(goalId: string): Promise<CommunityStats> {
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const dailyGame = await getTodaysDailyGame();
+
+	// No game available - redirect to play which will show the error
+	if (!dailyGame) {
+		throw redirect(303, '/play');
+	}
+
 	const gameResult = await getOrCreateGameResult(locals.sessionId, dailyGame.id);
 	const existingGuesses = await getGuessesForGame(gameResult.id);
 

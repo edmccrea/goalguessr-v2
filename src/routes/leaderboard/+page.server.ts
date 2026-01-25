@@ -1,6 +1,8 @@
 import { db } from '$lib/server/db';
 import { gameResults, dailyGames, sessions, users } from '$lib/server/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
+import { PUBLIC_FEATURE_LEADERBOARD } from '$env/static/public';
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 function getToday(): string {
@@ -8,6 +10,9 @@ function getToday(): string {
 }
 
 export const load: PageServerLoad = async () => {
+	if (PUBLIC_FEATURE_LEADERBOARD !== 'true') {
+		error(404, 'Not found');
+	}
 	const today = getToday();
 
 	// Get today's daily game

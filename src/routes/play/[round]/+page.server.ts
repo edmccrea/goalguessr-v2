@@ -1,11 +1,12 @@
 import type { PageServerLoad, Actions } from './$types';
-import { redirect, fail } from '@sveltejs/kit';
+import { redirect, fail, error } from '@sveltejs/kit';
 import {
 	getTodaysDailyGame,
 	getGoalForRound,
 	getOrCreateGameResult,
 	getGuessesForGame,
-	saveGuess
+	saveGuess,
+	getOrSetRoundStartTime
 } from '$lib/server/game';
 import { calculateScore } from '$lib/scoring';
 
@@ -17,6 +18,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const dailyGame = await getTodaysDailyGame();
+
+	// No game available - show error page
+	if (!dailyGame) {
+		throw error(503, {
+			message: 'No game available today',
+			details: 'There are no approved goals in the system yet. Check back later!'
+		});
+	}
 	const gameResult = await getOrCreateGameResult(locals.sessionId, dailyGame.id);
 	const existingGuesses = await getGuessesForGame(gameResult.id);
 
@@ -49,12 +58,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw redirect(303, '/play/1');
 	}
 
+	// Get or set the round start time (prevents timer reset exploit)
+	const roundStartedAt = await getOrSetRoundStartTime(gameResult.id, roundNumber);
+
 	return {
 		roundNumber,
 		dailyGameId: dailyGame.id,
 		goalId: goal.id,
 		animationData: goal.animationData,
-		isInternational: goal.isInternational
+		isInternational: goal.isInternational,
+		roundStartedAt: roundStartedAt.getTime()
 	};
 };
 
@@ -88,6 +101,9 @@ export const actions: Actions = {
 		}
 
 		const dailyGame = await getTodaysDailyGame();
+		if (!dailyGame) {
+			return fail(503, { error: 'No game available' });
+		}
 		const gameResult = await getOrCreateGameResult(locals.sessionId, dailyGame.id);
 
 		// Check if already submitted
@@ -128,7 +144,8 @@ export const actions: Actions = {
 					scorer: goal.scorer,
 					competition: goal.competition,
 					opponent: goal.opponent,
-					matchContext: goal.matchContext
+					matchContext: goal.matchContext,
+					submittedByUsername: goal.submittedByUsername
 				}
 			},
 			nextRound: roundNumber < 3 ? roundNumber + 1 : null

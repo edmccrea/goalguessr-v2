@@ -18,10 +18,12 @@
 	let team = $state('');
 	let year = $state('');
 	let scorer = $state('');
-	let startTime = $state(Date.now());
 	let elapsed = $state(0);
 	let isSubmitting = $state(false);
 	let mounted = $state(false);
+
+	// Use server's start time to prevent timer reset exploit
+	const startTime = $derived(data.roundStartedAt);
 
 	// Suggestions for autocomplete
 	let teamSuggestions = $state<Suggestion[]>([]);
@@ -54,16 +56,15 @@
 	// Derive showResult from form success
 	const showResult = $derived(form?.success === true);
 
-	// Reset timer and form when round changes
+	// Reset form when round changes
 	$effect(() => {
 		// Track round number to trigger reset
 		const _round = data.roundNumber;
 
-		// Reset all state for new round
+		// Reset form state for new round (startTime comes from server)
 		team = '';
 		year = '';
 		scorer = '';
-		startTime = Date.now();
 		elapsed = 0;
 		isSubmitting = false;
 		teamSuggestions = [];
@@ -83,6 +84,8 @@
 	// Timer (only run when not showing result)
 	$effect(() => {
 		if (showResult) return;
+		// Calculate immediately on load (don't wait for first interval)
+		elapsed = Math.floor((Date.now() - startTime) / 1000);
 		const interval = setInterval(() => {
 			elapsed = Math.floor((Date.now() - startTime) / 1000);
 		}, 1000);
@@ -94,10 +97,6 @@
 		const secs = elapsed % 60;
 		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 	});
-
-	function getTimeTakenMs(): number {
-		return Date.now() - startTime;
-	}
 
 	function getScoreEmoji(points: number): string {
 		if (points >= 35) return '🔥';
@@ -355,6 +354,16 @@
 								{/if}
 							</div>
 						{/if}
+
+						<!-- Submitted by credit -->
+						{#if form.result.correctAnswer.submittedByUsername}
+							<div
+								class="text-center text-[11px] text-text-muted/60 mt-3"
+								in:fade={{ duration: 300, delay: 600 }}
+							>
+								Goal created by {form.result.correctAnswer.submittedByUsername}
+							</div>
+						{/if}
 					</div>
 
 					<!-- Next round button -->
@@ -386,7 +395,8 @@
 					<form
 						method="POST"
 						action="?/submit"
-						use:enhance={() => {
+						use:enhance={({ formData }) => {
+							formData.set('timeTakenMs', String(Date.now() - startTime));
 							isSubmitting = true;
 							return async ({ result, update }) => {
 								isSubmitting = false;
@@ -414,7 +424,6 @@
 							</div>
 						</div>
 
-						<input type="hidden" name="timeTakenMs" value={getTimeTakenMs()} />
 
 						{#if form?.error}
 							<div class="flex items-center gap-3 bg-error-light border border-error/20 text-error px-4 py-3 rounded-xl mb-4 text-sm">

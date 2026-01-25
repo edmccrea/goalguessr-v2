@@ -28,6 +28,7 @@ export const goals = sqliteTable('goals', {
 	animationData: text('animation_data', { mode: 'json' }).notNull(),
 	status: text('status', { enum: ['pending', 'approved', 'rejected'] }).default('pending'),
 	submittedBy: text('submitted_by').references(() => users.id),
+	submittedByUsername: text('submitted_by_username'),
 	reviewedBy: text('reviewed_by').references(() => users.id),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
@@ -58,6 +59,9 @@ export const gameResults = sqliteTable('game_results', {
 	round3Score: integer('round_3_score').default(0),
 	totalScore: integer('total_score').default(0),
 	timeTakenMs: integer('time_taken_ms'),
+	round1StartedAt: integer('round_1_started_at', { mode: 'timestamp' }),
+	round2StartedAt: integer('round_2_started_at', { mode: 'timestamp' }),
+	round3StartedAt: integer('round_3_started_at', { mode: 'timestamp' }),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
