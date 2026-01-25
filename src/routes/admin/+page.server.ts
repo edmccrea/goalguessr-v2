@@ -31,11 +31,15 @@ export const load: PageServerLoad = async () => {
 		.where(eq(dailyGames.date, today))
 		.get();
 
-	// Get upcoming scheduled goals count
+	// Get upcoming scheduled daily games count (excluding today)
+	const tomorrow = new Date();
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
 	const [scheduledCount] = await db
 		.select({ count: sql<number>`count(*)` })
-		.from(goalQueue)
-		.where(gte(goalQueue.scheduledDate, today));
+		.from(dailyGames)
+		.where(gte(dailyGames.date, tomorrowStr));
 
 	// Get recent submissions (last 5)
 	const recentSubmissions = await db

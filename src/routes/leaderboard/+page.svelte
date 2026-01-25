@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { fly, fade, scale } from 'svelte/transition';
 	import { cubicOut, backOut } from 'svelte/easing';
+	import Skeleton from '$lib/components/ui/Skeleton.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let activeTab = $state<'daily' | 'alltime'>('daily');
@@ -113,35 +114,103 @@
 					class="bg-surface border border-border rounded-2xl overflow-hidden shadow-lg"
 					in:fly={{ y: 20, duration: 500, delay: 200, easing: cubicOut }}
 				>
-					<div class="px-6 py-4 bg-surface-dim border-b border-border">
-						<div class="flex items-center justify-between">
-							<div>
-								<span
-									class="inline-flex items-center gap-2 text-primary font-medium text-xs uppercase tracking-wide"
-								>
-									<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-										/>
-									</svg>
-									Daily Challenge
-								</span>
-								<p class="text-sm text-text-muted mt-1">Scores for {data.todayDate}</p>
-							</div>
-							<div
-								class="text-xs text-text-muted bg-surface px-3 py-1.5 rounded-full border border-border"
-							>
-								{data.dailyLeaderboard.length} player{data.dailyLeaderboard.length !== 1
-									? 's'
-									: ''}
+					{#await data.dailyLeaderboard}
+						<!-- Skeleton loading state -->
+						<div class="px-6 py-4 bg-surface-dim border-b border-border">
+							<div class="flex items-center justify-between">
+								<div>
+									<span
+										class="inline-flex items-center gap-2 text-primary font-medium text-xs uppercase tracking-wide"
+									>
+										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
+										</svg>
+										Daily Challenge
+									</span>
+									<p class="text-sm text-text-muted mt-1">Scores for {data.todayDate}</p>
+								</div>
+								<Skeleton class="h-6 w-20 rounded-full" />
 							</div>
 						</div>
-					</div>
+						<div class="hidden sm:block">
+							<table class="w-full">
+								<thead class="bg-surface-dim/50">
+									<tr>
+										<th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wide">Rank</th>
+										<th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wide">Player</th>
+										<th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase tracking-wide">R1</th>
+										<th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase tracking-wide">R2</th>
+										<th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase tracking-wide">R3</th>
+										<th class="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wide">Total</th>
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-border">
+									{#each [0, 1, 2, 3, 4] as i}
+										<tr>
+											<td class="px-6 py-4"><Skeleton class="w-8 h-8 rounded-lg" /></td>
+											<td class="px-6 py-4"><Skeleton class="h-5 w-32 rounded" /></td>
+											<td class="px-6 py-4 text-center"><Skeleton class="h-5 w-8 mx-auto rounded" /></td>
+											<td class="px-6 py-4 text-center"><Skeleton class="h-5 w-8 mx-auto rounded" /></td>
+											<td class="px-6 py-4 text-center"><Skeleton class="h-5 w-8 mx-auto rounded" /></td>
+											<td class="px-6 py-4 text-right"><Skeleton class="h-6 w-12 ml-auto rounded" /></td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+						<!-- Mobile skeleton -->
+						<div class="sm:hidden divide-y divide-border">
+							{#each [0, 1, 2, 3, 4] as i}
+								<div class="p-4">
+									<div class="flex items-center gap-3">
+										<Skeleton class="w-10 h-10 rounded-xl" />
+										<div class="flex-1">
+											<Skeleton class="h-5 w-24 mb-1 rounded" />
+											<Skeleton class="h-3 w-16 rounded" />
+										</div>
+										<div class="text-right">
+											<Skeleton class="h-6 w-12 mb-1 rounded" />
+											<Skeleton class="h-3 w-10 rounded" />
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{:then dailyLeaderboard}
+						<div class="px-6 py-4 bg-surface-dim border-b border-border">
+							<div class="flex items-center justify-between">
+								<div>
+									<span
+										class="inline-flex items-center gap-2 text-primary font-medium text-xs uppercase tracking-wide"
+									>
+										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
+										</svg>
+										Daily Challenge
+									</span>
+									<p class="text-sm text-text-muted mt-1">Scores for {data.todayDate}</p>
+								</div>
+								<div
+									class="text-xs text-text-muted bg-surface px-3 py-1.5 rounded-full border border-border"
+								>
+									{dailyLeaderboard.length} player{dailyLeaderboard.length !== 1
+										? 's'
+										: ''}
+								</div>
+							</div>
+						</div>
 
-					{#if data.dailyLeaderboard.length === 0}
+					{#if dailyLeaderboard.length === 0}
 						<div class="px-6 py-16 text-center">
 							<div
 								class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-surface-dim flex items-center justify-center"
@@ -210,7 +279,7 @@
 									</tr>
 								</thead>
 								<tbody class="divide-y divide-border">
-									{#each data.dailyLeaderboard as entry, idx}
+									{#each dailyLeaderboard as entry, idx}
 										<tr
 											class="hover:bg-surface-dim/50 transition-colors"
 											in:fly={{ y: 10, duration: 300, delay: 250 + idx * 50, easing: cubicOut }}
@@ -275,7 +344,7 @@
 
 						<!-- Mobile Cards -->
 						<div class="sm:hidden divide-y divide-border">
-							{#each data.dailyLeaderboard as entry, idx}
+							{#each dailyLeaderboard as entry, idx}
 								<div
 									class="p-4 hover:bg-surface-dim/50 transition-colors"
 									in:fly={{ y: 10, duration: 300, delay: 250 + idx * 50, easing: cubicOut }}
@@ -327,6 +396,7 @@
 							{/each}
 						</div>
 					{/if}
+					{/await}
 				</div>
 			{:else}
 				<!-- All Time Leaderboard -->
@@ -334,35 +404,101 @@
 					class="bg-surface border border-border rounded-2xl overflow-hidden shadow-lg"
 					in:fly={{ y: 20, duration: 500, delay: 200, easing: cubicOut }}
 				>
-					<div class="px-6 py-4 bg-surface-dim border-b border-border">
-						<div class="flex items-center justify-between">
-							<div>
-								<span
-									class="inline-flex items-center gap-2 text-primary font-medium text-xs uppercase tracking-wide"
-								>
-									<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-										/>
-									</svg>
-									All Time Rankings
-								</span>
-								<p class="text-sm text-text-muted mt-1">Registered players only</p>
-							</div>
-							<div
-								class="text-xs text-text-muted bg-surface px-3 py-1.5 rounded-full border border-border"
-							>
-								{data.allTimeLeaderboard.length} player{data.allTimeLeaderboard.length !== 1
-									? 's'
-									: ''}
+					{#await data.allTimeLeaderboard}
+						<!-- Skeleton loading state -->
+						<div class="px-6 py-4 bg-surface-dim border-b border-border">
+							<div class="flex items-center justify-between">
+								<div>
+									<span
+										class="inline-flex items-center gap-2 text-primary font-medium text-xs uppercase tracking-wide"
+									>
+										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+											/>
+										</svg>
+										All Time Rankings
+									</span>
+									<p class="text-sm text-text-muted mt-1">Registered players only</p>
+								</div>
+								<Skeleton class="h-6 w-20 rounded-full" />
 							</div>
 						</div>
-					</div>
+						<div class="hidden sm:block">
+							<table class="w-full">
+								<thead class="bg-surface-dim/50">
+									<tr>
+										<th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wide">Rank</th>
+										<th class="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wide">Player</th>
+										<th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase tracking-wide">Games</th>
+										<th class="px-6 py-3 text-center text-xs font-medium text-text-muted uppercase tracking-wide">Avg</th>
+										<th class="px-6 py-3 text-right text-xs font-medium text-text-muted uppercase tracking-wide">Total</th>
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-border">
+									{#each [0, 1, 2, 3, 4] as i}
+										<tr>
+											<td class="px-6 py-4"><Skeleton class="w-8 h-8 rounded-lg" /></td>
+											<td class="px-6 py-4"><Skeleton class="h-5 w-32 rounded" /></td>
+											<td class="px-6 py-4 text-center"><Skeleton class="h-6 w-12 mx-auto rounded-full" /></td>
+											<td class="px-6 py-4 text-center"><Skeleton class="h-5 w-10 mx-auto rounded" /></td>
+											<td class="px-6 py-4 text-right"><Skeleton class="h-6 w-14 ml-auto rounded" /></td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+						<!-- Mobile skeleton -->
+						<div class="sm:hidden divide-y divide-border">
+							{#each [0, 1, 2, 3, 4] as i}
+								<div class="p-4">
+									<div class="flex items-center gap-3">
+										<Skeleton class="w-10 h-10 rounded-xl" />
+										<div class="flex-1">
+											<Skeleton class="h-5 w-24 mb-1 rounded" />
+											<Skeleton class="h-3 w-20 rounded" />
+										</div>
+										<div class="text-right">
+											<Skeleton class="h-6 w-12 mb-1 rounded" />
+											<Skeleton class="h-3 w-10 rounded" />
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{:then allTimeLeaderboard}
+						<div class="px-6 py-4 bg-surface-dim border-b border-border">
+							<div class="flex items-center justify-between">
+								<div>
+									<span
+										class="inline-flex items-center gap-2 text-primary font-medium text-xs uppercase tracking-wide"
+									>
+										<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+											/>
+										</svg>
+										All Time Rankings
+									</span>
+									<p class="text-sm text-text-muted mt-1">Registered players only</p>
+								</div>
+								<div
+									class="text-xs text-text-muted bg-surface px-3 py-1.5 rounded-full border border-border"
+								>
+									{allTimeLeaderboard.length} player{allTimeLeaderboard.length !== 1
+										? 's'
+										: ''}
+								</div>
+							</div>
+						</div>
 
-					{#if data.allTimeLeaderboard.length === 0}
+					{#if allTimeLeaderboard.length === 0}
 						<div class="px-6 py-16 text-center">
 							<div
 								class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-surface-dim flex items-center justify-center"
@@ -429,7 +565,7 @@
 									</tr>
 								</thead>
 								<tbody class="divide-y divide-border">
-									{#each data.allTimeLeaderboard as entry, idx}
+									{#each allTimeLeaderboard as entry, idx}
 										<tr
 											class="hover:bg-surface-dim/50 transition-colors"
 											in:fly={{ y: 10, duration: 300, delay: 250 + idx * 50, easing: cubicOut }}
@@ -514,7 +650,7 @@
 
 						<!-- Mobile Cards -->
 						<div class="sm:hidden divide-y divide-border">
-							{#each data.allTimeLeaderboard as entry, idx}
+							{#each allTimeLeaderboard as entry, idx}
 								<div
 									class="p-4 hover:bg-surface-dim/50 transition-colors"
 									in:fly={{ y: 10, duration: 300, delay: 250 + idx * 50, easing: cubicOut }}
@@ -566,6 +702,7 @@
 							{/each}
 						</div>
 					{/if}
+					{/await}
 				</div>
 			{/if}
 		</div>

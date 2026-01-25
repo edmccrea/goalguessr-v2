@@ -4,6 +4,7 @@
 	import { fly, scale } from 'svelte/transition';
 	import { cubicOut, backOut } from 'svelte/easing';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
+	import Skeleton from '$lib/components/ui/Skeleton.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let isLoggingOut = $state(false);
@@ -213,38 +214,53 @@
 						Your Stats
 					</span>
 				</div>
-				<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-					{#each [{ value: data.stats.gamesPlayed, label: 'Games Played', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }, { value: data.stats.totalScore, label: 'Total Score', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' }, { value: data.stats.avgScore, label: 'Avg Score', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' }, { value: data.stats.accuracy + '%', label: 'Overall Accuracy', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }] as stat, idx}
-						<div
-							class="bg-surface border border-border p-5 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-							in:scale={{ start: 0.95, duration: 400, delay: 250 + idx * 75, easing: backOut }}
-						>
-							<div class="flex items-center gap-2 mb-3">
-								<div
-									class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
-								>
-									<svg
-										class="w-4 h-4 text-primary"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d={stat.icon}
-										/>
-									</svg>
+				{#await data.stats}
+					<!-- Skeleton loading state -->
+					<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+						{#each [0, 1, 2, 3] as i}
+							<div class="bg-surface border border-border p-5 rounded-2xl shadow-lg">
+								<div class="flex items-center gap-2 mb-3">
+									<Skeleton class="w-8 h-8 rounded-lg" />
 								</div>
+								<Skeleton class="h-10 w-20 rounded mb-1" />
+								<Skeleton class="h-3 w-16 rounded" />
 							</div>
-							<div class="text-3xl sm:text-4xl font-bold text-primary tabular-nums">
-								{stat.value}
+						{/each}
+					</div>
+				{:then stats}
+					<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+						{#each [{ value: stats.gamesPlayed, label: 'Games Played', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }, { value: stats.totalScore, label: 'Total Score', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' }, { value: stats.avgScore, label: 'Avg Score', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' }, { value: stats.accuracy + '%', label: 'Overall Accuracy', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' }] as stat, idx}
+							<div
+								class="bg-surface border border-border p-5 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+								in:scale={{ start: 0.95, duration: 400, delay: 250 + idx * 75, easing: backOut }}
+							>
+								<div class="flex items-center gap-2 mb-3">
+									<div
+										class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
+									>
+										<svg
+											class="w-4 h-4 text-primary"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d={stat.icon}
+											/>
+										</svg>
+									</div>
+								</div>
+								<div class="text-3xl sm:text-4xl font-bold text-primary tabular-nums">
+									{stat.value}
+								</div>
+								<div class="text-text-muted text-xs uppercase tracking-wide mt-1">{stat.label}</div>
 							</div>
-							<div class="text-text-muted text-xs uppercase tracking-wide mt-1">{stat.label}</div>
-						</div>
-					{/each}
-				</div>
+						{/each}
+					</div>
+				{/await}
 			</div>
 
 			<!-- Accuracy Breakdown -->
@@ -264,44 +280,62 @@
 						Accuracy Breakdown
 					</span>
 				</div>
-				<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-					{#each [{ label: 'Team', value: data.stats.teamAccuracy, color: 'primary', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' }, { label: 'Year', value: data.stats.yearAccuracy, color: 'warning', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' }, { label: 'Scorer', value: data.stats.scorerAccuracy, color: 'success', icon: 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z' }] as stat, idx}
-						<div
-							class="bg-surface border border-border p-5 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-							in:scale={{ start: 0.95, duration: 400, delay: 400 + idx * 75, easing: backOut }}
-						>
-							<div class="flex items-center justify-between mb-4">
-								<div class="flex items-center gap-2">
-									<div
-										class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 {stat.color === 'primary' ? 'bg-primary/10' : stat.color === 'warning' ? 'bg-warning/10' : 'bg-success/10'}"
-									>
-										<svg
-											class="w-4 h-4 {stat.color === 'primary' ? 'text-primary' : stat.color === 'warning' ? 'text-warning' : 'text-success'}"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d={stat.icon}
-											/>
-										</svg>
+				{#await data.stats}
+					<!-- Skeleton loading state -->
+					<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+						{#each [0, 1, 2] as i}
+							<div class="bg-surface border border-border p-5 rounded-2xl shadow-lg">
+								<div class="flex items-center justify-between mb-4">
+									<div class="flex items-center gap-2">
+										<Skeleton class="w-8 h-8 rounded-lg" />
+										<Skeleton class="h-4 w-12 rounded" />
 									</div>
-									<span class="text-sm font-medium text-text-muted">{stat.label}</span>
+									<Skeleton class="h-6 w-12 rounded" />
 								</div>
-								<span class="text-xl font-bold tabular-nums">{stat.value}%</span>
+								<Skeleton class="h-2.5 w-full rounded-full" />
 							</div>
-							<div class="h-2.5 bg-surface-dim rounded-full overflow-hidden">
-								<div
-									class="h-full rounded-full transition-all duration-500 {stat.color === 'primary' ? 'bg-primary' : stat.color === 'warning' ? 'bg-warning' : 'bg-success'}"
-									style="width: {stat.value}%"
-								></div>
+						{/each}
+					</div>
+				{:then stats}
+					<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+						{#each [{ label: 'Team', value: stats.teamAccuracy, color: 'primary', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' }, { label: 'Year', value: stats.yearAccuracy, color: 'warning', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' }, { label: 'Scorer', value: stats.scorerAccuracy, color: 'success', icon: 'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z' }] as stat, idx}
+							<div
+								class="bg-surface border border-border p-5 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+								in:scale={{ start: 0.95, duration: 400, delay: 400 + idx * 75, easing: backOut }}
+							>
+								<div class="flex items-center justify-between mb-4">
+									<div class="flex items-center gap-2">
+										<div
+											class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 {stat.color === 'primary' ? 'bg-primary/10' : stat.color === 'warning' ? 'bg-warning/10' : 'bg-success/10'}"
+										>
+											<svg
+												class="w-4 h-4 {stat.color === 'primary' ? 'text-primary' : stat.color === 'warning' ? 'text-warning' : 'text-success'}"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d={stat.icon}
+												/>
+											</svg>
+										</div>
+										<span class="text-sm font-medium text-text-muted">{stat.label}</span>
+									</div>
+									<span class="text-xl font-bold tabular-nums">{stat.value}%</span>
+								</div>
+								<div class="h-2.5 bg-surface-dim rounded-full overflow-hidden">
+									<div
+										class="h-full rounded-full transition-all duration-500 {stat.color === 'primary' ? 'bg-primary' : stat.color === 'warning' ? 'bg-warning' : 'bg-success'}"
+										style="width: {stat.value}%"
+									></div>
+								</div>
 							</div>
-						</div>
-					{/each}
-				</div>
+						{/each}
+					</div>
+				{/await}
 			</div>
 
 			<!-- Recent Games -->
@@ -322,7 +356,59 @@
 					</span>
 				</div>
 
-				{#if data.recentGames.length > 0}
+				{#await data.recentGames}
+					<!-- Skeleton loading state -->
+					<div class="bg-surface border border-border rounded-2xl shadow-lg overflow-hidden">
+						<div class="hidden sm:block">
+							<table class="w-full">
+								<thead class="bg-surface-dim/50">
+									<tr>
+										<th class="text-left px-6 py-3 text-xs font-medium text-text-muted uppercase tracking-wide">Date</th>
+										<th class="text-center px-6 py-3 text-xs font-medium text-text-muted uppercase tracking-wide">R1</th>
+										<th class="text-center px-6 py-3 text-xs font-medium text-text-muted uppercase tracking-wide">R2</th>
+										<th class="text-center px-6 py-3 text-xs font-medium text-text-muted uppercase tracking-wide">R3</th>
+										<th class="text-right px-6 py-3 text-xs font-medium text-text-muted uppercase tracking-wide">Total</th>
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-border">
+									{#each [0, 1, 2, 3, 4] as i}
+										<tr>
+											<td class="px-6 py-4">
+												<div class="flex items-center gap-3">
+													<Skeleton class="w-8 h-8 rounded-lg" />
+													<Skeleton class="h-5 w-24 rounded" />
+												</div>
+											</td>
+											<td class="px-6 py-4 text-center"><Skeleton class="h-5 w-8 mx-auto rounded" /></td>
+											<td class="px-6 py-4 text-center"><Skeleton class="h-5 w-8 mx-auto rounded" /></td>
+											<td class="px-6 py-4 text-center"><Skeleton class="h-5 w-8 mx-auto rounded" /></td>
+											<td class="px-6 py-4 text-right"><Skeleton class="h-6 w-12 ml-auto rounded" /></td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+						<!-- Mobile skeleton -->
+						<div class="sm:hidden divide-y divide-border">
+							{#each [0, 1, 2, 3, 4] as i}
+								<div class="p-4">
+									<div class="flex items-center gap-3">
+										<Skeleton class="w-10 h-10 rounded-xl" />
+										<div class="flex-1">
+											<Skeleton class="h-5 w-24 mb-1 rounded" />
+											<Skeleton class="h-3 w-20 rounded" />
+										</div>
+										<div class="text-right">
+											<Skeleton class="h-6 w-12 mb-1 rounded" />
+											<Skeleton class="h-3 w-10 rounded" />
+										</div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{:then recentGames}
+				{#if recentGames.length > 0}
 					<div class="bg-surface border border-border rounded-2xl shadow-lg overflow-hidden">
 						<!-- Desktop Table -->
 						<div class="hidden sm:block">
@@ -352,7 +438,7 @@
 									</tr>
 								</thead>
 								<tbody class="divide-y divide-border">
-									{#each data.recentGames as game, idx}
+									{#each recentGames as game, idx}
 										<tr
 											class="hover:bg-surface-dim/50 transition-colors"
 											in:fly={{ y: 10, duration: 300, delay: 450 + idx * 50, easing: cubicOut }}
@@ -409,7 +495,7 @@
 
 						<!-- Mobile Cards -->
 						<div class="sm:hidden divide-y divide-border">
-							{#each data.recentGames as game, idx}
+							{#each recentGames as game, idx}
 								<div
 									class="p-4 hover:bg-surface-dim/50 transition-colors"
 									in:fly={{ y: 10, duration: 300, delay: 450 + idx * 50, easing: cubicOut }}
@@ -501,6 +587,7 @@
 						</a>
 					</div>
 				{/if}
+				{/await}
 			</div>
 		</div>
 	</div>

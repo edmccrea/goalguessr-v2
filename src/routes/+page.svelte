@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { PageData } from './$types';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { fade, fly, scale } from 'svelte/transition';
@@ -9,8 +10,12 @@
 	import GoalAnimation from '$lib/components/animation/GoalAnimation.svelte';
 	import { sampleAnimation } from '$lib/sample-animation';
 	import favicon from '$lib/assets/favicon.svg';
+	import Skeleton from '$lib/components/ui/Skeleton.svelte';
+
+	let { data }: { data: PageData } = $props();
 
 	const showLeaderboard = PUBLIC_FEATURE_LEADERBOARD === 'true';
+	const showStats = data.stats !== null;
 
 	let mounted = $state(false);
 	let howItWorksVisible = $state(false);
@@ -70,14 +75,20 @@
 			featuresVisible = true;
 		}, { margin: '-100px' });
 
-		inView('.stats-section', () => {
-			if (!statsVisible) {
-				statsVisible = true;
-				animateCounter(500, (n) => goalsCount = n);
-				animateCounter(2500, (n) => playersCount = n);
-				animateCounter(365, (n) => daysCount = n);
-			}
-		}, { margin: '-100px' });
+		if (showStats) {
+			inView('.stats-section', async () => {
+				if (!statsVisible) {
+					statsVisible = true;
+					// Wait for stats to load before animating counters
+					const stats = await data.stats;
+					if (stats) {
+						animateCounter(stats.goalsCount, (n) => goalsCount = n);
+						animateCounter(stats.playersCount, (n) => playersCount = n);
+						animateCounter(stats.daysRunning, (n) => daysCount = n);
+					}
+				}
+			}, { margin: '-100px' });
+		}
 	});
 </script>
 
@@ -283,26 +294,40 @@
 </section>
 
 <!-- Stats Section -->
-<section class="stats-section py-20 px-6 bg-gradient-to-b from-background to-surface-dim/30">
-	<div class="max-w-4xl mx-auto">
-		{#if statsVisible}
-			<div class="grid grid-cols-3 gap-8" in:fade={{ duration: 400 }}>
-				<div class="text-center" in:fly={{ y: 30, duration: 600, delay: 0, easing: cubicOut }}>
-					<div class="text-4xl sm:text-5xl font-bold text-primary mb-2">{goalsCount}+</div>
-					<div class="text-text-muted text-sm uppercase tracking-wide">Goals Created</div>
+{#if showStats}
+	<section class="stats-section py-20 px-6 bg-gradient-to-b from-background to-surface-dim/30">
+		<div class="max-w-4xl mx-auto">
+			{#await data.stats}
+				<!-- Skeleton loading state -->
+				<div class="grid grid-cols-3 gap-8">
+					{#each [0, 1, 2] as i}
+						<div class="text-center">
+							<Skeleton class="h-12 w-24 mx-auto mb-2 rounded-lg" />
+							<Skeleton class="h-4 w-20 mx-auto rounded" />
+						</div>
+					{/each}
 				</div>
-				<div class="text-center" in:fly={{ y: 30, duration: 600, delay: 100, easing: cubicOut }}>
-					<div class="text-4xl sm:text-5xl font-bold text-primary mb-2">{playersCount}+</div>
-					<div class="text-text-muted text-sm uppercase tracking-wide">Players</div>
-				</div>
-				<div class="text-center" in:fly={{ y: 30, duration: 600, delay: 200, easing: cubicOut }}>
-					<div class="text-4xl sm:text-5xl font-bold text-primary mb-2">{daysCount}</div>
-					<div class="text-text-muted text-sm uppercase tracking-wide">Days Running</div>
-				</div>
-			</div>
-		{/if}
-	</div>
-</section>
+			{:then stats}
+				{#if statsVisible}
+					<div class="grid grid-cols-3 gap-8" in:fade={{ duration: 400 }}>
+						<div class="text-center" in:fly={{ y: 30, duration: 600, delay: 0, easing: cubicOut }}>
+							<div class="text-4xl sm:text-5xl font-bold text-primary mb-2">{goalsCount}+</div>
+							<div class="text-text-muted text-sm uppercase tracking-wide">Goals Created</div>
+						</div>
+						<div class="text-center" in:fly={{ y: 30, duration: 600, delay: 100, easing: cubicOut }}>
+							<div class="text-4xl sm:text-5xl font-bold text-primary mb-2">{playersCount}+</div>
+							<div class="text-text-muted text-sm uppercase tracking-wide">Players</div>
+						</div>
+						<div class="text-center" in:fly={{ y: 30, duration: 600, delay: 200, easing: cubicOut }}>
+							<div class="text-4xl sm:text-5xl font-bold text-primary mb-2">{daysCount}</div>
+							<div class="text-text-muted text-sm uppercase tracking-wide">Days Running</div>
+						</div>
+					</div>
+				{/if}
+			{/await}
+		</div>
+	</section>
+{/if}
 
 <!-- Features -->
 <section class="features-section py-24 px-6">

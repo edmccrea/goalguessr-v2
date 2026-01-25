@@ -3,12 +3,10 @@ import { db } from '$lib/server/db';
 import { gameResults, guesses, sessions } from '$lib/server/db/schema';
 import { eq, sql, and } from 'drizzle-orm';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	// Get all sessions for this user (or just current session if anonymous)
+async function getSessionIds(locals: App.Locals): Promise<string[]> {
 	let sessionIds: string[] = [locals.sessionId];
 
 	if (locals.user) {
-		// Get all sessions linked to this user
 		const userSessions = await db
 			.select({ id: sessions.id })
 			.from(sessions)
@@ -16,6 +14,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		sessionIds = userSessions.map((s) => s.id);
 	}
 
+	return sessionIds;
+}
+
+async function loadStats(sessionIds: string[]) {
 	// Get aggregate stats from game_results
 	const statsQuery = await db
 		.select({
@@ -45,10 +47,24 @@ export const load: PageServerLoad = async ({ locals }) => {
 		(guessStats?.teamCorrect ?? 0) +
 		(guessStats?.yearCorrect ?? 0) +
 		(guessStats?.scorerCorrect ?? 0);
-	const totalPossible = totalGuesses * 3; // 3 categories per guess
+	const totalPossible = totalGuesses * 3;
 
-	// Get recent games
-	const recentGames = await db
+	return {
+		gamesPlayed: statsQuery?.gamesPlayed ?? 0,
+		totalScore: statsQuery?.totalScore ?? 0,
+		avgScore: Math.round(statsQuery?.avgScore ?? 0),
+		accuracy: totalPossible > 0 ? Math.round((correctGuesses / totalPossible) * 100) : 0,
+		teamAccuracy:
+			totalGuesses > 0 ? Math.round(((guessStats?.teamCorrect ?? 0) / totalGuesses) * 100) : 0,
+		yearAccuracy:
+			totalGuesses > 0 ? Math.round(((guessStats?.yearCorrect ?? 0) / totalGuesses) * 100) : 0,
+		scorerAccuracy:
+			totalGuesses > 0 ? Math.round(((guessStats?.scorerCorrect ?? 0) / totalGuesses) * 100) : 0
+	};
+}
+
+async function loadRecentGames(sessionIds: string[]) {
+	return db
 		.select({
 			id: gameResults.id,
 			totalScore: gameResults.totalScore,
@@ -61,20 +77,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.where(sql`${gameResults.sessionId} IN (${sql.join(sessionIds.map(id => sql`${id}`), sql`, `)})`)
 		.orderBy(sql`${gameResults.createdAt} DESC`)
 		.limit(10);
+}
 
+export const load: PageServerLoad = async ({ locals }) => {
+	// Get session IDs first (needed for both queries)
+	const sessionIds = await getSessionIds(locals);
+
+	// Return promises for streaming - stats and recent games load in parallel
 	return {
-		stats: {
-			gamesPlayed: statsQuery?.gamesPlayed ?? 0,
-			totalScore: statsQuery?.totalScore ?? 0,
-			avgScore: Math.round(statsQuery?.avgScore ?? 0),
-			accuracy: totalPossible > 0 ? Math.round((correctGuesses / totalPossible) * 100) : 0,
-			teamAccuracy:
-				totalGuesses > 0 ? Math.round(((guessStats?.teamCorrect ?? 0) / totalGuesses) * 100) : 0,
-			yearAccuracy:
-				totalGuesses > 0 ? Math.round(((guessStats?.yearCorrect ?? 0) / totalGuesses) * 100) : 0,
-			scorerAccuracy:
-				totalGuesses > 0 ? Math.round(((guessStats?.scorerCorrect ?? 0) / totalGuesses) * 100) : 0
-		},
-		recentGames
+		stats: loadStats(sessionIds),
+		recentGames: loadRecentGames(sessionIds)
 	};
 };
