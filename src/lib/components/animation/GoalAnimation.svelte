@@ -63,6 +63,25 @@
 	// Visual time clamped to animation duration (for when paused at end)
 	const visualTime = $derived(Math.min(currentTime, animation.duration));
 
+	// Timeline progress that smoothly returns to 0 during end pause
+	const timelineProgress = $derived.by(() => {
+		if (!loop) {
+			// No looping - just show normal progress
+			return visualTime / animation.duration;
+		}
+
+		if (currentTime <= animation.duration) {
+			// Normal playback
+			return currentTime / animation.duration;
+		}
+
+		// End pause phase - quickly animate from 100% back to 0%
+		const resetDuration = 400; // ms - how long the reset animation takes
+		const pauseElapsed = currentTime - animation.duration;
+		const resetProgress = Math.min(1, pauseElapsed / resetDuration);
+		return 1 - resetProgress;
+	});
+
 	// Get interpolated positions for all entities at current time
 	const interpolatedPositions = $derived.by(() => {
 		const { prevKeyframe, nextKeyframe } = getKeyframePair(visualTime);
@@ -397,8 +416,8 @@
 		</button>
 		<div class="flex-1 h-1 bg-white/30 rounded overflow-hidden">
 			<div
-				class="h-full bg-white transition-all"
-				style="width: {(visualTime / animation.duration) * 100}%"
+				class="h-full bg-white"
+				style="width: {timelineProgress * 100}%"
 			></div>
 		</div>
 		<span class="text-white text-xs font-mono">
