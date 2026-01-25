@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
 
 	let { data, form } = $props();
 
 	let searchQuery = $state('');
 	let statusFilter = $state<'all' | 'pending' | 'approved' | 'rejected'>('all');
 	let deleteConfirmId = $state<string | null>(null);
+	let processingGoal = $state<{ id: string; action: 'approve' | 'reject' | 'delete' } | null>(null);
 
 	$effect(() => {
 		if (form?.success) {
@@ -257,43 +259,75 @@
 												</a>
 
 												{#if goal.status !== 'approved'}
-													<form method="POST" action="?/updateStatus" use:enhance class="inline">
+													<form method="POST" action="?/updateStatus" use:enhance={() => {
+														processingGoal = { id: goal.id, action: 'approve' };
+														return async ({ update }) => {
+															processingGoal = null;
+															await update();
+														};
+													}} class="inline">
 														<input type="hidden" name="goalId" value={goal.id} />
 														<input type="hidden" name="status" value="approved" />
-														<button type="submit" class="inline-flex items-center gap-1 text-sm text-primary hover:text-primary-hover font-medium px-2 py-1 rounded-lg hover:bg-primary/5 transition-colors">
-															<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-																<polyline points="20 6 9 17 4 12"/>
-															</svg>
+														<button type="submit" disabled={processingGoal !== null} class="inline-flex items-center gap-1 text-sm text-primary hover:text-primary-hover disabled:text-primary/50 font-medium px-2 py-1 rounded-lg hover:bg-primary/5 disabled:hover:bg-transparent transition-colors disabled:cursor-not-allowed">
+															{#if processingGoal?.id === goal.id && processingGoal?.action === 'approve'}
+																<Spinner size="sm" />
+															{:else}
+																<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+																	<polyline points="20 6 9 17 4 12"/>
+																</svg>
+															{/if}
 															Approve
 														</button>
 													</form>
 												{/if}
 
 												{#if goal.status !== 'rejected'}
-													<form method="POST" action="?/updateStatus" use:enhance class="inline">
+													<form method="POST" action="?/updateStatus" use:enhance={() => {
+														processingGoal = { id: goal.id, action: 'reject' };
+														return async ({ update }) => {
+															processingGoal = null;
+															await update();
+														};
+													}} class="inline">
 														<input type="hidden" name="goalId" value={goal.id} />
 														<input type="hidden" name="status" value="rejected" />
-														<button type="submit" class="inline-flex items-center gap-1 text-sm text-yellow-600 hover:text-yellow-700 font-medium px-2 py-1 rounded-lg hover:bg-yellow-500/5 transition-colors">
-															<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-																<circle cx="12" cy="12" r="10"/>
-																<path d="m15 9-6 6M9 9l6 6"/>
-															</svg>
+														<button type="submit" disabled={processingGoal !== null} class="inline-flex items-center gap-1 text-sm text-yellow-600 hover:text-yellow-700 disabled:text-yellow-600/50 font-medium px-2 py-1 rounded-lg hover:bg-yellow-500/5 disabled:hover:bg-transparent transition-colors disabled:cursor-not-allowed">
+															{#if processingGoal?.id === goal.id && processingGoal?.action === 'reject'}
+																<Spinner size="sm" />
+															{:else}
+																<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+																	<circle cx="12" cy="12" r="10"/>
+																	<path d="m15 9-6 6M9 9l6 6"/>
+																</svg>
+															{/if}
 															Reject
 														</button>
 													</form>
 												{/if}
 
 												{#if deleteConfirmId === goal.id}
-													<form method="POST" action="?/delete" use:enhance class="inline">
+													<form method="POST" action="?/delete" use:enhance={() => {
+														processingGoal = { id: goal.id, action: 'delete' };
+														return async ({ update }) => {
+															processingGoal = null;
+															await update();
+														};
+													}} class="inline">
 														<input type="hidden" name="goalId" value={goal.id} />
-														<button type="submit" class="inline-flex items-center gap-1 text-sm text-red-500 hover:text-red-600 font-bold px-2 py-1 rounded-lg bg-red-500/10 transition-colors">
-															Confirm?
+														<button type="submit" disabled={processingGoal !== null} class="inline-flex items-center gap-1 text-sm text-red-500 hover:text-red-600 font-bold px-2 py-1 rounded-lg bg-red-500/10 transition-colors disabled:cursor-not-allowed">
+															{#if processingGoal?.id === goal.id && processingGoal?.action === 'delete'}
+																<Spinner size="sm" />
+																Deleting...
+															{:else}
+																Confirm?
+															{/if}
 														</button>
 													</form>
 													<button
 														type="button"
 														onclick={() => deleteConfirmId = null}
-														class="text-sm text-text-muted hover:text-text px-2 py-1 rounded-lg hover:bg-surface-dim transition-colors"
+														disabled={processingGoal !== null}
+														class="text-sm text-text-muted hover:text-text px-2 py-1 rounded-lg hover:bg-surface-dim transition-colors disabled:cursor-not-allowed"
 													>
 														Cancel
 													</button>
@@ -301,7 +335,8 @@
 													<button
 														type="button"
 														onclick={() => deleteConfirmId = goal.id}
-														class="inline-flex items-center gap-1 text-sm text-red-500 hover:text-red-600 font-medium px-2 py-1 rounded-lg hover:bg-red-500/5 transition-colors"
+														disabled={processingGoal !== null}
+														class="inline-flex items-center gap-1 text-sm text-red-500 hover:text-red-600 disabled:text-red-500/50 font-medium px-2 py-1 rounded-lg hover:bg-red-500/5 disabled:hover:bg-transparent transition-colors disabled:cursor-not-allowed"
 													>
 														<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 															<path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>

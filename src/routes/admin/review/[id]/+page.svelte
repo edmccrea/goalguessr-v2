@@ -3,8 +3,10 @@
 	import { goto } from '$app/navigation';
 	import { GoalAnimation } from '$lib/components/animation';
 	import type { AnimationData } from '$lib/server/db/schema';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
 
 	let { data, form } = $props();
+	let processingAction = $state<'approve' | 'reject' | null>(null);
 
 	$effect(() => {
 		if (form?.success) {
@@ -179,27 +181,51 @@
 			<!-- Actions -->
 			{#if data.goal.status === 'pending'}
 				<div class="p-6 border-t border-border flex gap-4">
-					<form method="POST" action="?/approve" use:enhance class="flex-1">
+					<form method="POST" action="?/approve" use:enhance={() => {
+						processingAction = 'approve';
+						return async ({ update }) => {
+							processingAction = null;
+							await update();
+						};
+					}} class="flex-1">
 						<button
 							type="submit"
-							class="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+							disabled={processingAction !== null}
+							class="w-full bg-primary hover:bg-primary-hover disabled:bg-primary/70 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed"
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<polyline points="20 6 9 17 4 12"/>
-							</svg>
-							Approve Goal
+							{#if processingAction === 'approve'}
+								<Spinner size="md" />
+								Approving...
+							{:else}
+								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<polyline points="20 6 9 17 4 12"/>
+								</svg>
+								Approve Goal
+							{/if}
 						</button>
 					</form>
-					<form method="POST" action="?/reject" use:enhance class="flex-1">
+					<form method="POST" action="?/reject" use:enhance={() => {
+						processingAction = 'reject';
+						return async ({ update }) => {
+							processingAction = null;
+							await update();
+						};
+					}} class="flex-1">
 						<button
 							type="submit"
-							class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+							disabled={processingAction !== null}
+							class="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed"
 						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<line x1="18" y1="6" x2="6" y2="18"/>
-								<line x1="6" y1="6" x2="18" y2="18"/>
-							</svg>
-							Reject Goal
+							{#if processingAction === 'reject'}
+								<Spinner size="md" />
+								Rejecting...
+							{:else}
+								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<line x1="18" y1="6" x2="6" y2="18"/>
+									<line x1="6" y1="6" x2="18" y2="18"/>
+								</svg>
+								Reject Goal
+							{/if}
 						</button>
 					</form>
 				</div>

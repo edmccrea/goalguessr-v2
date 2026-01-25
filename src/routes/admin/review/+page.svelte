@@ -3,11 +3,13 @@
 	import { GoalAnimation } from '$lib/components/animation';
 	import type { AnimationData } from '$lib/server/db/schema';
 	import { toast } from 'svelte-sonner';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
 
 	let { data, form } = $props();
 
 	let selectedGoal = $state<(typeof data.pendingGoals)[0] | null>(null);
 	let showPreview = $state(false);
+	let processingGoal = $state<{ id: string; action: 'approve' | 'reject' } | null>(null);
 
 	$effect(() => {
 		if (form?.success) {
@@ -159,28 +161,52 @@
 
 							<!-- Actions -->
 							<div class="border-t border-border p-3 flex gap-2">
-								<form method="POST" action="?/approve" use:enhance class="flex-1">
+								<form method="POST" action="?/approve" use:enhance={() => {
+									processingGoal = { id: goal.id, action: 'approve' };
+									return async ({ update }) => {
+										processingGoal = null;
+										await update();
+									};
+								}} class="flex-1">
 									<input type="hidden" name="goalId" value={goal.id} />
 									<button
 										type="submit"
-										class="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+										disabled={processingGoal !== null}
+										class="w-full bg-primary hover:bg-primary-hover disabled:bg-primary/70 text-white font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md disabled:cursor-not-allowed"
 									>
-										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<polyline points="20 6 9 17 4 12"/>
-										</svg>
-										Approve
+										{#if processingGoal?.id === goal.id && processingGoal?.action === 'approve'}
+											<Spinner size="sm" />
+											Approving...
+										{:else}
+											<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+												<polyline points="20 6 9 17 4 12"/>
+											</svg>
+											Approve
+										{/if}
 									</button>
 								</form>
-								<form method="POST" action="?/reject" use:enhance class="flex-1">
+								<form method="POST" action="?/reject" use:enhance={() => {
+									processingGoal = { id: goal.id, action: 'reject' };
+									return async ({ update }) => {
+										processingGoal = null;
+										await update();
+									};
+								}} class="flex-1">
 									<input type="hidden" name="goalId" value={goal.id} />
 									<button
 										type="submit"
-										class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
+										disabled={processingGoal !== null}
+										class="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
 									>
-										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-											<path d="M18 6 6 18M6 6l12 12"/>
-										</svg>
-										Reject
+										{#if processingGoal?.id === goal.id && processingGoal?.action === 'reject'}
+											<Spinner size="sm" />
+											Rejecting...
+										{:else}
+											<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+												<path d="M18 6 6 18M6 6l12 12"/>
+											</svg>
+											Reject
+										{/if}
 									</button>
 								</form>
 							</div>
@@ -284,30 +310,56 @@
 
 			<!-- Actions -->
 			<div class="p-4 border-t border-border flex gap-3">
-				<form method="POST" action="?/approve" use:enhance class="flex-1">
+				<form method="POST" action="?/approve" use:enhance={() => {
+					processingGoal = { id: selectedGoal!.id, action: 'approve' };
+					return async ({ update }) => {
+						processingGoal = null;
+						showPreview = false;
+						selectedGoal = null;
+						await update();
+					};
+				}} class="flex-1">
 					<input type="hidden" name="goalId" value={selectedGoal.id} />
 					<button
 						type="submit"
-						onclick={() => { showPreview = false; selectedGoal = null; }}
-						class="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+						disabled={processingGoal !== null}
+						class="w-full bg-primary hover:bg-primary-hover disabled:bg-primary/70 text-white font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md disabled:cursor-not-allowed"
 					>
-						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<polyline points="20 6 9 17 4 12"/>
-						</svg>
-						Approve
+						{#if processingGoal?.id === selectedGoal.id && processingGoal?.action === 'approve'}
+							<Spinner size="sm" />
+							Approving...
+						{:else}
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="20 6 9 17 4 12"/>
+							</svg>
+							Approve
+						{/if}
 					</button>
 				</form>
-				<form method="POST" action="?/reject" use:enhance class="flex-1">
+				<form method="POST" action="?/reject" use:enhance={() => {
+					processingGoal = { id: selectedGoal!.id, action: 'reject' };
+					return async ({ update }) => {
+						processingGoal = null;
+						showPreview = false;
+						selectedGoal = null;
+						await update();
+					};
+				}} class="flex-1">
 					<input type="hidden" name="goalId" value={selectedGoal.id} />
 					<button
 						type="submit"
-						onclick={() => { showPreview = false; selectedGoal = null; }}
-						class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2"
+						disabled={processingGoal !== null}
+						class="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
 					>
-						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M18 6 6 18M6 6l12 12"/>
-						</svg>
-						Reject
+						{#if processingGoal?.id === selectedGoal.id && processingGoal?.action === 'reject'}
+							<Spinner size="sm" />
+							Rejecting...
+						{:else}
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M18 6 6 18M6 6l12 12"/>
+							</svg>
+							Reject
+						{/if}
 					</button>
 				</form>
 			</div>

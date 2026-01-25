@@ -1,9 +1,12 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import { enhance } from '$app/forms';
 	import { fly, scale } from 'svelte/transition';
 	import { cubicOut, backOut } from 'svelte/easing';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
 
 	let { data }: { data: PageData } = $props();
+	let isLoggingOut = $state(false);
 </script>
 
 <div class="relative min-h-screen overflow-hidden">
@@ -103,25 +106,36 @@
 								<p class="text-text-muted mt-1">{data.user.email}</p>
 							</div>
 						</div>
-						<form method="POST" action="/auth/logout">
+						<form method="POST" action="/auth/logout" use:enhance={() => {
+							isLoggingOut = true;
+							return async ({ update }) => {
+								await update();
+							};
+						}}>
 							<button
 								type="submit"
-								class="group flex items-center gap-2 bg-surface-dim hover:bg-border border border-border px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:border-error/30 hover:text-error"
+								disabled={isLoggingOut}
+								class="group flex items-center gap-2 bg-surface-dim hover:bg-border disabled:bg-surface-dim border border-border px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:border-error/30 hover:text-error disabled:cursor-not-allowed disabled:opacity-70"
 							>
-								<svg
-									class="w-4 h-4 transition-transform group-hover:translate-x-0.5"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="2"
-										d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-									/>
-								</svg>
-								Logout
+								{#if isLoggingOut}
+									<Spinner size="sm" />
+									Logging out...
+								{:else}
+									<svg
+										class="w-4 h-4 transition-transform group-hover:translate-x-0.5"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+										/>
+									</svg>
+									Logout
+								{/if}
 							</button>
 						</form>
 					</div>

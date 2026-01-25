@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { ActionData } from './$types';
+	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import { fly, scale } from 'svelte/transition';
 	import { cubicOut, backOut } from 'svelte/easing';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
 
 	let { form }: { form: ActionData } = $props();
+	let isSubmitting = $state(false);
 
 	$effect(() => {
 		if (form?.error) {
@@ -50,6 +53,13 @@
 				method="POST"
 				class="bg-surface border border-border rounded-2xl p-6 shadow-lg space-y-5"
 				in:fly={{ y: 20, duration: 500, delay: 100, easing: cubicOut }}
+				use:enhance={() => {
+					isSubmitting = true;
+					return async ({ update }) => {
+						isSubmitting = false;
+						await update();
+					};
+				}}
 			>
 				<div in:fly={{ y: 10, duration: 400, delay: 150, easing: cubicOut }}>
 					<label for="email" class="block text-sm font-medium mb-2">Email</label>
@@ -113,22 +123,28 @@
 				<div in:scale={{ start: 0.95, duration: 400, delay: 250, easing: backOut }}>
 					<button
 						type="submit"
-						class="group w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+						disabled={isSubmitting}
+						class="group w-full bg-primary hover:bg-primary-hover disabled:bg-primary/70 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 disabled:translate-y-0 disabled:shadow-lg disabled:cursor-not-allowed flex items-center justify-center gap-2"
 					>
-						Sign In
-						<svg
-							class="w-5 h-5 transition-transform group-hover:translate-x-1"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M13 7l5 5m0 0l-5 5m5-5H6"
-							/>
-						</svg>
+						{#if isSubmitting}
+							<Spinner size="md" />
+							Signing in...
+						{:else}
+							Sign In
+							<svg
+								class="w-5 h-5 transition-transform group-hover:translate-x-1"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M13 7l5 5m0 0l-5 5m5-5H6"
+								/>
+							</svg>
+						{/if}
 					</button>
 				</div>
 			</form>
