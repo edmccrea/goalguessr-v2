@@ -6,7 +6,7 @@ import { like, or, eq, and } from 'drizzle-orm';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const query = url.searchParams.get('q')?.toLowerCase().trim();
-	const isInternational = url.searchParams.get('international') === 'true';
+	const internationalParam = url.searchParams.get('international');
 
 	if (!query || query.length < 2) {
 		return json({ suggestions: [] });
@@ -22,9 +22,18 @@ export const GET: RequestHandler = async ({ url }) => {
 			like(teams.code, searchPattern)
 		);
 
-		const whereCondition = isInternational
-			? and(searchCondition, eq(teams.isNationalTeam, true))
-			: searchCondition;
+		// Filter by team type if international param is specified
+		let whereCondition;
+		if (internationalParam === 'true') {
+			// Only national teams
+			whereCondition = and(searchCondition, eq(teams.isNationalTeam, true));
+		} else if (internationalParam === 'false') {
+			// Only club teams
+			whereCondition = and(searchCondition, eq(teams.isNationalTeam, false));
+		} else {
+			// No filter - show all teams
+			whereCondition = searchCondition;
+		}
 
 		// Search teams by name, short name, or code
 		const results = await db
@@ -41,6 +50,16 @@ export const GET: RequestHandler = async ({ url }) => {
 
 		// Also search in aliases if we don't have enough results
 		if (results.length < 5) {
+			// Build alias where condition based on international param
+			let aliasWhereCondition;
+			if (internationalParam === 'true') {
+				aliasWhereCondition = and(like(teamAliases.alias, searchPattern), eq(teams.isNationalTeam, true));
+			} else if (internationalParam === 'false') {
+				aliasWhereCondition = and(like(teamAliases.alias, searchPattern), eq(teams.isNationalTeam, false));
+			} else {
+				aliasWhereCondition = like(teamAliases.alias, searchPattern);
+			}
+
 			const aliasResults = await db
 				.selectDistinct({
 					id: teams.id,
@@ -51,11 +70,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				})
 				.from(teams)
 				.innerJoin(teamAliases, eq(teamAliases.teamId, teams.id))
-				.where(
-					isInternational
-						? and(like(teamAliases.alias, searchPattern), eq(teams.isNationalTeam, true))
-						: like(teamAliases.alias, searchPattern)
-				)
+				.where(aliasWhereCondition)
 				.limit(10 - results.length);
 
 			// Merge and dedupe

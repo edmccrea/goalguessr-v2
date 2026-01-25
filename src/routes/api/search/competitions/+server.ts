@@ -6,7 +6,7 @@ import { like, or, eq, and } from 'drizzle-orm';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const query = url.searchParams.get('q')?.toLowerCase().trim();
-	const isInternational = url.searchParams.get('international') === 'true';
+	const internationalParam = url.searchParams.get('international');
 
 	if (!query || query.length < 2) {
 		return json({ suggestions: [] });
@@ -21,9 +21,18 @@ export const GET: RequestHandler = async ({ url }) => {
 			like(competitions.shortName, searchPattern)
 		);
 
-		const whereCondition = isInternational
-			? and(searchCondition, eq(competitions.isInternational, true))
-			: searchCondition;
+		// Filter by competition type if international param is specified
+		let whereCondition;
+		if (internationalParam === 'true') {
+			// Only international competitions
+			whereCondition = and(searchCondition, eq(competitions.isInternational, true));
+		} else if (internationalParam === 'false') {
+			// Only club/domestic competitions
+			whereCondition = and(searchCondition, eq(competitions.isInternational, false));
+		} else {
+			// No filter - show all competitions
+			whereCondition = searchCondition;
+		}
 
 		// Search competitions by name or short name
 		const results = await db

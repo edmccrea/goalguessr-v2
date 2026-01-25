@@ -409,6 +409,10 @@ function validate(): { valid: boolean; errors: string[] } {
 		errors.push('Enter the opponent');
 	}
 
+	if (!metadata.videoUrl.trim()) {
+		errors.push('Enter the video URL');
+	}
+
 	return {
 		valid: errors.length === 0,
 		errors
