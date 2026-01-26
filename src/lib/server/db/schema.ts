@@ -27,6 +27,7 @@ export const goals = sqliteTable('goals', {
 	isInternational: integer('is_international', { mode: 'boolean' }).default(false),
 	animationData: text('animation_data', { mode: 'json' }).notNull(),
 	status: text('status', { enum: ['pending', 'approved', 'rejected'] }).default('pending'),
+	rejectionReason: text('rejection_reason'),
 	submittedBy: text('submitted_by').references(() => users.id),
 	submittedByUsername: text('submitted_by_username'),
 	reviewedBy: text('reviewed_by').references(() => users.id),

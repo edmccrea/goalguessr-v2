@@ -10,6 +10,9 @@
 	let selectedGoal = $state<(typeof data.pendingGoals)[0] | null>(null);
 	let showPreview = $state(false);
 	let processingGoal = $state<{ id: string; action: 'approve' | 'reject' } | null>(null);
+	let showRejectModal = $state(false);
+	let rejectingGoal = $state<(typeof data.pendingGoals)[0] | null>(null);
+	let rejectionReason = $state('');
 
 	$effect(() => {
 		if (form?.success) {
@@ -175,30 +178,17 @@
 									</svg>
 									Review
 								</a>
-								<form method="POST" action="?/reject" use:enhance={() => {
-									processingGoal = { id: goal.id, action: 'reject' };
-									return async ({ update }) => {
-										processingGoal = null;
-										await update();
-									};
-								}} class="flex-1">
-									<input type="hidden" name="goalId" value={goal.id} />
-									<button
-										type="submit"
-										disabled={processingGoal !== null}
-										class="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
-									>
-										{#if processingGoal?.id === goal.id && processingGoal?.action === 'reject'}
-											<Spinner size="sm" />
-											Rejecting...
-										{:else}
-											<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-												<path d="M18 6 6 18M6 6l12 12"/>
-											</svg>
-											Reject
-										{/if}
-									</button>
-								</form>
+								<button
+									type="button"
+									onclick={() => { rejectingGoal = goal; showRejectModal = true; }}
+									disabled={processingGoal !== null}
+									class="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M18 6 6 18M6 6l12 12"/>
+									</svg>
+									Reject
+								</button>
 							</div>
 						</div>
 					{/each}
@@ -310,33 +300,96 @@
 					</svg>
 					Review
 				</a>
-				<form method="POST" action="?/reject" use:enhance={() => {
-					processingGoal = { id: selectedGoal!.id, action: 'reject' };
-					return async ({ update }) => {
-						processingGoal = null;
-						showPreview = false;
-						selectedGoal = null;
-						await update();
-					};
-				}} class="flex-1">
-					<input type="hidden" name="goalId" value={selectedGoal.id} />
+				<button
+					type="button"
+					onclick={() => { rejectingGoal = selectedGoal; showRejectModal = true; showPreview = false; }}
+					disabled={processingGoal !== null}
+					class="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M18 6 6 18M6 6l12 12"/>
+					</svg>
+					Reject
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Rejection Modal -->
+{#if showRejectModal && rejectingGoal}
+	<div
+		class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 p-4 flex items-center justify-center"
+		role="dialog"
+		aria-modal="true"
+		tabindex="-1"
+		onclick={(e) => { if (e.target === e.currentTarget && processingGoal === null) { showRejectModal = false; rejectingGoal = null; rejectionReason = ''; } }}
+		onkeydown={(e) => { if (e.key === 'Escape' && processingGoal === null) { showRejectModal = false; rejectingGoal = null; rejectionReason = ''; } }}
+	>
+		<div class="bg-surface rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+			<div class="p-6 border-b border-border">
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+							<line x1="18" y1="6" x2="6" y2="18"/>
+							<line x1="6" y1="6" x2="18" y2="18"/>
+						</svg>
+					</div>
+					<div>
+						<h2 class="text-xl font-bold">Reject Goal</h2>
+						<p class="text-sm text-text-muted">{rejectingGoal.scorer} - {rejectingGoal.team} ({rejectingGoal.year})</p>
+					</div>
+				</div>
+			</div>
+
+			<form method="POST" action="?/reject" use:enhance={() => {
+				processingGoal = { id: rejectingGoal!.id, action: 'reject' };
+				return async ({ update }) => {
+					processingGoal = null;
+					showRejectModal = false;
+					rejectingGoal = null;
+					rejectionReason = '';
+					selectedGoal = null;
+					await update();
+				};
+			}}>
+				<input type="hidden" name="goalId" value={rejectingGoal.id} />
+				<div class="p-6">
+					<label for="rejectionReason" class="block text-sm font-medium mb-2">Rejection Reason</label>
+					<textarea
+						id="rejectionReason"
+						name="rejectionReason"
+						bind:value={rejectionReason}
+						rows="4"
+						class="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
+						placeholder="Explain why this goal is being rejected (e.g., animation doesn't match the video, incorrect metadata, duplicate submission...)"
+					></textarea>
+					<p class="text-xs text-text-muted mt-2">This message will be visible to the user who submitted the goal.</p>
+				</div>
+
+				<div class="p-4 border-t border-border flex gap-3">
+					<button
+						type="button"
+						onclick={() => { showRejectModal = false; rejectingGoal = null; rejectionReason = ''; }}
+						disabled={processingGoal !== null}
+						class="flex-1 bg-surface-dim hover:bg-border border border-border font-semibold py-3 px-4 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						Cancel
+					</button>
 					<button
 						type="submit"
 						disabled={processingGoal !== null}
-						class="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+						class="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed"
 					>
-						{#if processingGoal?.id === selectedGoal.id && processingGoal?.action === 'reject'}
+						{#if processingGoal?.id === rejectingGoal.id && processingGoal?.action === 'reject'}
 							<Spinner size="sm" />
 							Rejecting...
 						{:else}
-							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<path d="M18 6 6 18M6 6l12 12"/>
-							</svg>
-							Reject
+							Reject Goal
 						{/if}
 					</button>
-				</form>
-			</div>
+				</div>
+			</form>
 		</div>
 	</div>
 {/if}

@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { gameResults, guesses, sessions } from '$lib/server/db/schema';
-import { eq, sql, and } from 'drizzle-orm';
+import { gameResults, guesses, sessions, goals } from '$lib/server/db/schema';
+import { eq, sql, and, desc } from 'drizzle-orm';
 
 async function getSessionIds(locals: App.Locals): Promise<string[]> {
 	let sessionIds: string[] = [locals.sessionId];
@@ -79,13 +79,31 @@ async function loadRecentGames(sessionIds: string[]) {
 		.limit(10);
 }
 
+async function loadRecentSubmissions(userId: string) {
+	return db
+		.select({
+			id: goals.id,
+			team: goals.team,
+			year: goals.year,
+			scorer: goals.scorer,
+			status: goals.status,
+			rejectionReason: goals.rejectionReason,
+			createdAt: goals.createdAt
+		})
+		.from(goals)
+		.where(eq(goals.submittedBy, userId))
+		.orderBy(desc(goals.createdAt))
+		.limit(5);
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
 	// Get session IDs first (needed for both queries)
 	const sessionIds = await getSessionIds(locals);
 
-	// Return promises for streaming - stats and recent games load in parallel
+	// Return promises for streaming - stats, recent games, and submissions load in parallel
 	return {
 		stats: loadStats(sessionIds),
-		recentGames: loadRecentGames(sessionIds)
+		recentGames: loadRecentGames(sessionIds),
+		recentSubmissions: locals.user ? loadRecentSubmissions(locals.user.id) : Promise.resolve([])
 	};
 };

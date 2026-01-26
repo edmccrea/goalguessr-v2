@@ -25,6 +25,8 @@
 	let showMissingEntitiesModal = $state(false);
 	let missingEntities = $state<MissingEntities | null>(null);
 	let isSubmittingWithData = $state(false);
+	let showRejectModal = $state(false);
+	let rejectionReason = $state('');
 
 	$effect(() => {
 		if (form?.success) {
@@ -268,30 +270,18 @@
 							{/if}
 						</button>
 					</form>
-					<form method="POST" action="?/reject" use:enhance={() => {
-						processingAction = 'reject';
-						return async ({ update }) => {
-							processingAction = null;
-							await update();
-						};
-					}} class="flex-1">
-						<button
-							type="submit"
-							disabled={processingAction !== null}
-							class="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed"
-						>
-							{#if processingAction === 'reject'}
-								<Spinner size="md" />
-								Rejecting...
-							{:else}
-								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-									<line x1="18" y1="6" x2="6" y2="18"/>
-									<line x1="6" y1="6" x2="18" y2="18"/>
-								</svg>
-								Reject Goal
-							{/if}
-						</button>
-					</form>
+					<button
+						type="button"
+						onclick={() => { showRejectModal = true; }}
+						disabled={processingAction !== null}
+						class="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<line x1="18" y1="6" x2="6" y2="18"/>
+							<line x1="6" y1="6" x2="18" y2="18"/>
+						</svg>
+						Reject Goal
+					</button>
 				</div>
 			{:else}
 				<div class="p-6 border-t border-border text-center text-text-muted">
@@ -321,4 +311,78 @@
 		onCancel={handleModalCancel}
 		isSubmitting={isSubmittingWithData}
 	/>
+{/if}
+
+{#if showRejectModal}
+	<div
+		class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 p-4 flex items-center justify-center"
+		role="dialog"
+		aria-modal="true"
+		tabindex="-1"
+		onclick={(e) => { if (e.target === e.currentTarget && processingAction !== 'reject') { showRejectModal = false; rejectionReason = ''; } }}
+		onkeydown={(e) => { if (e.key === 'Escape' && processingAction !== 'reject') { showRejectModal = false; rejectionReason = ''; } }}
+	>
+		<div class="bg-surface rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+			<div class="p-6 border-b border-border">
+				<div class="flex items-center gap-3">
+					<div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+						<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+							<line x1="18" y1="6" x2="6" y2="18"/>
+							<line x1="6" y1="6" x2="18" y2="18"/>
+						</svg>
+					</div>
+					<div>
+						<h2 class="text-xl font-bold">Reject Goal</h2>
+						<p class="text-sm text-text-muted">Provide a reason for rejecting this submission</p>
+					</div>
+				</div>
+			</div>
+
+			<form method="POST" action="?/reject" use:enhance={() => {
+				processingAction = 'reject';
+				return async ({ update }) => {
+					processingAction = null;
+					showRejectModal = false;
+					rejectionReason = '';
+					await update();
+				};
+			}}>
+				<div class="p-6">
+					<label for="rejectionReason" class="block text-sm font-medium mb-2">Rejection Reason</label>
+					<textarea
+						id="rejectionReason"
+						name="rejectionReason"
+						bind:value={rejectionReason}
+						rows="4"
+						class="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
+						placeholder="Explain why this goal is being rejected (e.g., animation doesn't match the video, incorrect metadata, duplicate submission...)"
+					></textarea>
+					<p class="text-xs text-text-muted mt-2">This message will be visible to the user who submitted the goal.</p>
+				</div>
+
+				<div class="p-4 border-t border-border flex gap-3">
+					<button
+						type="button"
+						onclick={() => { showRejectModal = false; rejectionReason = ''; }}
+						disabled={processingAction === 'reject'}
+						class="flex-1 bg-surface-dim hover:bg-border border border-border font-semibold py-3 px-4 rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						Cancel
+					</button>
+					<button
+						type="submit"
+						disabled={processingAction === 'reject'}
+						class="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-red-500/70 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+					>
+						{#if processingAction === 'reject'}
+							<Spinner size="md" />
+							Rejecting...
+						{:else}
+							Reject Goal
+						{/if}
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
 {/if}

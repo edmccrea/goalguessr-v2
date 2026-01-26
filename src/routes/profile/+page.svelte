@@ -593,6 +593,104 @@
 				{/if}
 				{/await}
 			</div>
+
+			<!-- Your Submissions -->
+			{#if data.user}
+				<div class="mt-8" in:fly={{ y: 20, duration: 500, delay: 500, easing: cubicOut }}>
+					<div class="flex items-center justify-between mb-5">
+						<span class="inline-flex items-center gap-2 text-primary font-medium text-xs uppercase tracking-wide">
+							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+							</svg>
+							Your Submissions
+						</span>
+						<a
+							href="/submissions"
+							class="text-sm text-primary hover:text-primary-hover transition-colors font-medium"
+						>
+							View all
+						</a>
+					</div>
+
+					{#await data.recentSubmissions}
+						<!-- Skeleton loading state -->
+						<div class="bg-surface border border-border rounded-2xl shadow-lg overflow-hidden">
+							<div class="divide-y divide-border">
+								{#each [0, 1, 2] as i}
+									<div class="p-4 flex items-center gap-4">
+										<Skeleton class="w-10 h-10 rounded-xl" />
+										<div class="flex-1">
+											<Skeleton class="h-5 w-32 mb-1 rounded" />
+											<Skeleton class="h-3 w-24 rounded" />
+										</div>
+										<Skeleton class="h-6 w-16 rounded-full" />
+									</div>
+								{/each}
+							</div>
+						</div>
+					{:then recentSubmissions}
+						{#if recentSubmissions.length > 0}
+							<div class="bg-surface border border-border rounded-2xl shadow-lg overflow-hidden">
+								<div class="divide-y divide-border">
+									{#each recentSubmissions as submission, idx}
+										<div
+											class="p-4 hover:bg-surface-dim/50 transition-colors"
+											in:fly={{ y: 10, duration: 300, delay: 550 + idx * 50, easing: cubicOut }}
+										>
+											<div class="flex items-center gap-4">
+												<div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+													<svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<circle cx="12" cy="12" r="10" stroke-width="2"/>
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+													</svg>
+												</div>
+												<div class="flex-1 min-w-0">
+													<div class="flex items-center gap-2 flex-wrap">
+														<span class="font-medium">{submission.scorer}</span>
+														<span class="text-primary font-semibold">{submission.year}</span>
+													</div>
+													<p class="text-sm text-text-muted truncate">{submission.team}</p>
+												</div>
+												<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0 {submission.status === 'approved' ? 'bg-primary/10 text-primary' : submission.status === 'rejected' ? 'bg-red-500/10 text-red-500' : 'bg-yellow-500/10 text-yellow-500'}">
+													<span class="w-1.5 h-1.5 rounded-full {submission.status === 'approved' ? 'bg-primary' : submission.status === 'rejected' ? 'bg-red-500' : 'bg-yellow-500'}"></span>
+													{submission.status}
+												</span>
+											</div>
+											{#if submission.status === 'rejected' && submission.rejectionReason}
+												<div class="mt-3 ml-14 p-3 bg-red-500/5 border border-red-500/20 rounded-lg">
+													<p class="text-xs text-red-500 font-medium mb-1">Rejection Reason</p>
+													<p class="text-sm text-text-muted">{submission.rejectionReason}</p>
+												</div>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							</div>
+						{:else}
+							<div
+								class="bg-surface border border-border p-8 rounded-2xl text-center shadow-lg"
+								in:scale={{ start: 0.95, duration: 400, delay: 550, easing: backOut }}
+							>
+								<div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-surface-dim flex items-center justify-center">
+									<svg class="w-6 h-6 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+									</svg>
+								</div>
+								<p class="text-text-muted font-medium text-sm">No submissions yet</p>
+								<a
+									href="/editor"
+									class="inline-flex items-center gap-2 mt-4 text-primary hover:text-primary-hover text-sm font-medium transition-colors"
+								>
+									Create your first goal
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+									</svg>
+								</a>
+							</div>
+						{/if}
+					{/await}
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>

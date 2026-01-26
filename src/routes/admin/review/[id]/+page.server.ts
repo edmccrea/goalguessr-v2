@@ -108,17 +108,21 @@ export const actions: Actions = {
 		return { success: true, action: 'approved' };
 	},
 
-	reject: async ({ params, locals }) => {
+	reject: async ({ params, locals, request }) => {
 		const goal = await db.select().from(goals).where(eq(goals.id, params.id)).get();
 
 		if (!goal) {
 			return fail(404, { error: 'Goal not found' });
 		}
 
+		const formData = await request.formData();
+		const rejectionReason = formData.get('rejectionReason') as string | null;
+
 		await db
 			.update(goals)
 			.set({
 				status: 'rejected',
+				rejectionReason: rejectionReason || null,
 				reviewedBy: locals.user?.id
 			})
 			.where(eq(goals.id, params.id));

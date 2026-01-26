@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { goals } from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
 import type { AnimationData } from '$lib/server/db/schema';
 
 interface GoalSubmission {
@@ -14,6 +15,7 @@ interface GoalSubmission {
 	videoUrl?: string;
 	isInternational?: boolean;
 	animationData: AnimationData;
+	resubmitId?: string;
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -56,6 +58,50 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			return json({ error: 'Animation must have a shot event' }, { status: 400 });
 		}
 
+		// Handle resubmission of rejected goal
+		if (body.resubmitId) {
+			// Verify the goal exists, is owned by the user, and is rejected
+			const existingGoal = await db
+				.select({ id: goals.id, status: goals.status })
+				.from(goals)
+				.where(
+					and(
+						eq(goals.id, body.resubmitId),
+						eq(goals.submittedBy, locals.user.id)
+					)
+				)
+				.get();
+
+			if (!existingGoal) {
+				return json({ error: 'Goal not found' }, { status: 404 });
+			}
+
+			if (existingGoal.status !== 'rejected') {
+				return json({ error: 'Only rejected goals can be resubmitted' }, { status: 400 });
+			}
+
+			// Update the existing goal
+			await db.update(goals)
+				.set({
+					team: body.team.trim(),
+					year: body.year,
+					scorer: body.scorer.trim(),
+					competition: body.competition?.trim() || null,
+					opponent: body.opponent?.trim() || null,
+					matchContext: body.matchContext?.trim() || null,
+					videoUrl: body.videoUrl?.trim() || null,
+					isInternational: body.isInternational ?? false,
+					animationData: body.animationData,
+					status: 'pending',
+					rejectionReason: null,
+					reviewedBy: null
+				})
+				.where(eq(goals.id, body.resubmitId));
+
+			return json({ success: true, id: body.resubmitId, resubmitted: true }, { status: 200 });
+		}
+
+		// Create new goal
 		const id = crypto.randomUUID();
 
 		await db.insert(goals).values({

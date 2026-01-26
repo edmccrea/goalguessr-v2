@@ -91,6 +91,7 @@ export const actions: Actions = {
 	reject: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const goalId = formData.get('goalId') as string;
+		const rejectionReason = formData.get('rejectionReason') as string | null;
 
 		if (!goalId) {
 			return fail(400, { error: 'Goal ID required' });
@@ -100,6 +101,7 @@ export const actions: Actions = {
 			.update(goals)
 			.set({
 				status: 'rejected',
+				rejectionReason: rejectionReason || null,
 				reviewedBy: locals.user?.id
 			})
 			.where(eq(goals.id, goalId));

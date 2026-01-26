@@ -6,13 +6,36 @@
 	import GoalAnimation from '$lib/components/animation/GoalAnimation.svelte';
 	import { editorState } from '$lib/editor-state.svelte';
 	import { toast } from 'svelte-sonner';
+	import type { AnimationData } from '$lib/server/db/schema';
+
+	let { data } = $props();
 
 	type ViewMode = 'edit' | 'split' | 'preview';
 	let viewMode = $state<ViewMode>('edit');
 	let mounted = $state(false);
+	let resubmitId = $state<string | null>(null);
 
 	onMount(() => {
 		mounted = true;
+
+		// Load resubmit goal data if available
+		if (data.resubmitGoal) {
+			resubmitId = data.resubmitGoal.id;
+			editorState.loadGoal({
+				team: data.resubmitGoal.team,
+				year: data.resubmitGoal.year,
+				scorer: data.resubmitGoal.scorer,
+				competition: data.resubmitGoal.competition,
+				opponent: data.resubmitGoal.opponent,
+				matchContext: data.resubmitGoal.matchContext,
+				videoUrl: data.resubmitGoal.videoUrl,
+				isInternational: data.resubmitGoal.isInternational,
+				animationData: data.resubmitGoal.animationData as AnimationData
+			});
+			toast.info('Editing rejected submission', {
+				description: 'Make your changes and resubmit for review.'
+			});
+		}
 	});
 
 	// Derived for backwards compatibility with existing logic
@@ -57,20 +80,28 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					...editorState.metadata,
-					animationData: liveAnimationData
+					animationData: liveAnimationData,
+					resubmitId: resubmitId
 				})
 			});
 
-			const data = await response.json();
+			const responseData = await response.json();
 
 			if (!response.ok) {
-				throw new Error(data.error || 'Failed to submit');
+				throw new Error(responseData.error || 'Failed to submit');
 			}
 
-			toast.success('Goal submitted!', {
-				description: 'Your goal will be reviewed by an admin.'
-			});
+			if (resubmitId) {
+				toast.success('Goal resubmitted!', {
+					description: 'Your updated goal will be reviewed by an admin.'
+				});
+			} else {
+				toast.success('Goal submitted!', {
+					description: 'Your goal will be reviewed by an admin.'
+				});
+			}
 			editorState.reset();
+			resubmitId = null;
 		} catch (err) {
 			toast.error('Failed to submit goal', {
 				description: err instanceof Error ? err.message : 'Please try again.'
@@ -83,6 +114,7 @@
 	function handleReset() {
 		if (confirm('Are you sure? This will clear all your work.')) {
 			editorState.reset();
+			resubmitId = null;
 		}
 	}
 </script>
