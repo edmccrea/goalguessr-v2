@@ -18,6 +18,7 @@
 		onSearch?: (query: string) => void;
 		minChars?: number;
 		maxSuggestions?: number;
+		isLoading?: boolean;
 	}
 
 	let {
@@ -29,11 +30,11 @@
 		suggestions = [],
 		onSearch,
 		minChars = 2,
-		maxSuggestions = 8
+		maxSuggestions = 8,
+		isLoading = false
 	}: Props = $props();
 
 	let isOpen = $state(false);
-	let isSearching = $state(false);
 	let highlightedIndex = $state(-1);
 	let justSelected = $state(false);
 	let inputRef: HTMLInputElement | undefined = $state();
@@ -51,15 +52,12 @@
 
 		clearTimeout(searchTimeout);
 		if (query.length >= minChars) {
-			isSearching = true;
 			searchTimeout = setTimeout(() => {
 				onSearch?.(query);
 				isOpen = true;
-				isSearching = false;
 			}, 200);
 		} else {
 			isOpen = false;
-			isSearching = false;
 		}
 	}
 
@@ -151,7 +149,7 @@
 		/>
 		<!-- Search/loading icon -->
 		<div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
-			{#if isSearching}
+			{#if isLoading}
 				<svg class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
 					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -205,7 +203,7 @@
 				</li>
 			{/each}
 		</ul>
-	{:else if isOpen && value.length >= minChars && !isSearching}
+	{:else if isOpen && value.length >= minChars && !isLoading}
 		<div
 			class="absolute z-50 w-full mt-2 bg-surface border border-border rounded-xl shadow-xl p-4 text-center text-text-muted text-sm"
 			transition:scale={{ duration: 150, start: 0.95, easing: cubicOut }}

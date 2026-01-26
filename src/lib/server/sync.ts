@@ -534,6 +534,320 @@ export async function getSyncStatus() {
 // ENTITY CREATION HELPERS (for goal approval)
 // =============================================================================
 
+// Types for entity data
+export type TeamData = {
+	name: string;
+	country?: string;
+	isNationalTeam?: boolean;
+	logoUrl?: string;
+};
+
+export type PlayerData = {
+	name: string;
+	nationality?: string;
+	position?: string;
+};
+
+export type CompetitionData = {
+	name: string;
+	type: 'league' | 'cup' | 'international';
+	country?: string;
+	isInternational?: boolean;
+};
+
+export type MissingEntities = {
+	team?: string;
+	player?: string;
+	opponent?: string;
+	competition?: string;
+};
+
+/**
+ * Check which entities from a goal don't exist in the database.
+ * Returns an object with the names of missing entities.
+ */
+export async function checkMissingEntities(goal: {
+	team: string;
+	scorer: string;
+	opponent?: string | null;
+	competition?: string | null;
+}): Promise<MissingEntities> {
+	const missing: MissingEntities = {};
+
+	// Check team
+	const teamExists = await findTeam(goal.team);
+	if (!teamExists) {
+		missing.team = goal.team;
+	}
+
+	// Check player
+	const playerExists = await findPlayer(goal.scorer);
+	if (!playerExists) {
+		missing.player = goal.scorer;
+	}
+
+	// Check opponent
+	if (goal.opponent) {
+		const opponentExists = await findTeam(goal.opponent);
+		if (!opponentExists) {
+			missing.opponent = goal.opponent;
+		}
+	}
+
+	// Check competition
+	if (goal.competition) {
+		const competitionExists = await findCompetition(goal.competition);
+		if (!competitionExists) {
+			missing.competition = goal.competition;
+		}
+	}
+
+	return missing;
+}
+
+/**
+ * Find a team by name (case-insensitive) or alias.
+ * Returns the team ID or null if not found.
+ */
+async function findTeam(name: string): Promise<string | null> {
+	const normalizedName = name.trim();
+	const lowerName = normalizedName.toLowerCase();
+
+	// Check by exact name (case-insensitive)
+	const existingTeam = await db
+		.select()
+		.from(teams)
+		.where(eq(teams.name, normalizedName))
+		.get();
+
+	if (existingTeam) {
+		return existingTeam.id;
+	}
+
+	// Check by alias
+	const aliasMatch = await db
+		.select({ teamId: teamAliases.teamId })
+		.from(teamAliases)
+		.where(eq(teamAliases.alias, lowerName))
+		.get();
+
+	if (aliasMatch) {
+		return aliasMatch.teamId;
+	}
+
+	return null;
+}
+
+/**
+ * Find a player by name (case-insensitive) or alias.
+ * Returns the player ID or null if not found.
+ */
+async function findPlayer(name: string): Promise<string | null> {
+	const normalizedName = name.trim();
+	const lowerName = normalizedName.toLowerCase();
+
+	// Check by exact name (case-insensitive)
+	const existingPlayer = await db
+		.select()
+		.from(players)
+		.where(eq(players.name, normalizedName))
+		.get();
+
+	if (existingPlayer) {
+		return existingPlayer.id;
+	}
+
+	// Check by alias
+	const aliasMatch = await db
+		.select({ playerId: playerAliases.playerId })
+		.from(playerAliases)
+		.where(eq(playerAliases.alias, lowerName))
+		.get();
+
+	if (aliasMatch) {
+		return aliasMatch.playerId;
+	}
+
+	return null;
+}
+
+/**
+ * Find a competition by name (case-insensitive).
+ * Returns the competition ID or null if not found.
+ */
+async function findCompetition(name: string): Promise<string | null> {
+	const normalizedName = name.trim();
+
+	const existingCompetition = await db
+		.select()
+		.from(competitions)
+		.where(eq(competitions.name, normalizedName))
+		.get();
+
+	if (existingCompetition) {
+		return existingCompetition.id;
+	}
+
+	return null;
+}
+
+/**
+ * Create a team with provided data.
+ * Returns the team ID.
+ */
+export async function createTeamWithData(data: TeamData): Promise<string> {
+	const normalizedName = data.name.trim();
+	const lowerName = normalizedName.toLowerCase();
+
+	const teamId = generateId();
+	await db.insert(teams).values({
+		id: teamId,
+		name: normalizedName,
+		shortName: normalizedName,
+		country: data.country || null,
+		isNationalTeam: data.isNationalTeam ?? false,
+		logoUrl: data.logoUrl || null
+	});
+
+	// Add the name as an alias for better future matching
+	await db.insert(teamAliases).values({
+		id: generateId(),
+		teamId,
+		alias: lowerName
+	});
+
+	return teamId;
+}
+
+/**
+ * Create a player with provided data and optionally link to a team.
+ * Returns the player ID.
+ */
+export async function createPlayerWithData(data: PlayerData, teamId?: string): Promise<string> {
+	const normalizedName = data.name.trim();
+	const lowerName = normalizedName.toLowerCase();
+
+	const playerId = generateId();
+
+	// Try to extract first/last name
+	const nameParts = normalizedName.split(' ');
+	const firstName = nameParts.length > 1 ? nameParts[0] : null;
+	const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : normalizedName;
+
+	await db.insert(players).values({
+		id: playerId,
+		name: normalizedName,
+		firstName,
+		lastName,
+		nationality: data.nationality || null,
+		position: data.position || null
+	});
+
+	// Add the name as an alias
+	await db.insert(playerAliases).values({
+		id: generateId(),
+		playerId,
+		alias: lowerName
+	});
+
+	// Also add just the last name as an alias if different
+	if (lastName.toLowerCase() !== lowerName) {
+		await db.insert(playerAliases).values({
+			id: generateId(),
+			playerId,
+			alias: lastName.toLowerCase()
+		});
+	}
+
+	// Link to team if provided
+	if (teamId) {
+		await db.insert(playerTeams).values({
+			id: generateId(),
+			playerId,
+			teamId
+		});
+	}
+
+	return playerId;
+}
+
+/**
+ * Create a competition with provided data.
+ * Returns the competition ID.
+ */
+export async function createCompetitionWithData(data: CompetitionData): Promise<string> {
+	const normalizedName = data.name.trim();
+
+	const competitionId = generateId();
+	await db.insert(competitions).values({
+		id: competitionId,
+		name: normalizedName,
+		shortName: normalizedName,
+		type: data.type,
+		country: data.country || null,
+		isInternational: data.isInternational ?? false
+	});
+
+	return competitionId;
+}
+
+/**
+ * Process entities from a goal with provided entity data.
+ * Creates any missing teams, players, or competitions using the provided data.
+ */
+export async function processGoalEntitiesWithData(
+	goal: {
+		team: string;
+		scorer: string;
+		opponent?: string | null;
+		competition?: string | null;
+	},
+	entityData: {
+		team?: TeamData;
+		player?: PlayerData;
+		opponent?: TeamData;
+		competition?: CompetitionData;
+	}
+): Promise<void> {
+	// Find or create the team
+	let teamId = await findTeam(goal.team);
+	if (!teamId && entityData.team) {
+		teamId = await createTeamWithData(entityData.team);
+	} else if (!teamId) {
+		teamId = await findOrCreateTeam(goal.team);
+	}
+
+	// Find or create the scorer
+	const playerId = await findPlayer(goal.scorer);
+	if (!playerId && entityData.player) {
+		await createPlayerWithData(entityData.player, teamId);
+	} else if (!playerId) {
+		await findOrCreatePlayer(goal.scorer, teamId);
+	} else if (teamId) {
+		await ensurePlayerTeamLink(playerId, teamId);
+	}
+
+	// Find or create the opponent team
+	if (goal.opponent) {
+		const opponentId = await findTeam(goal.opponent);
+		if (!opponentId && entityData.opponent) {
+			await createTeamWithData(entityData.opponent);
+		} else if (!opponentId) {
+			await findOrCreateTeam(goal.opponent);
+		}
+	}
+
+	// Find or create the competition
+	if (goal.competition) {
+		const competitionId = await findCompetition(goal.competition);
+		if (!competitionId && entityData.competition) {
+			await createCompetitionWithData(entityData.competition);
+		} else if (!competitionId) {
+			await findOrCreateCompetition(goal.competition);
+		}
+	}
+}
+
 /**
  * Find a team by name (case-insensitive) or alias, or create a new one if not found.
  * Returns the team ID.

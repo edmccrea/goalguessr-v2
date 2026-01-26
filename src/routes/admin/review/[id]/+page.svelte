@@ -4,9 +4,27 @@
 	import { GoalAnimation } from '$lib/components/animation';
 	import type { AnimationData } from '$lib/server/db/schema';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
+	import MissingEntitiesModal from '$lib/components/admin/MissingEntitiesModal.svelte';
+
+	type MissingEntities = {
+		team?: string;
+		player?: string;
+		opponent?: string;
+		competition?: string;
+	};
+
+	type EntityData = {
+		team?: { name: string; country?: string; isNationalTeam?: boolean; logoUrl?: string };
+		player?: { name: string; nationality?: string; position?: string };
+		opponent?: { name: string; country?: string; isNationalTeam?: boolean; logoUrl?: string };
+		competition?: { name: string; type: 'league' | 'cup' | 'international'; country?: string; isInternational?: boolean };
+	};
 
 	let { data, form } = $props();
 	let processingAction = $state<'approve' | 'reject' | null>(null);
+	let showMissingEntitiesModal = $state(false);
+	let missingEntities = $state<MissingEntities | null>(null);
+	let isSubmittingWithData = $state(false);
 
 	$effect(() => {
 		if (form?.success) {
@@ -14,7 +32,41 @@
 			setTimeout(() => goto('/admin/review'), 1000);
 		}
 	});
+
+	async function handleEntityDataConfirm(entityData: EntityData) {
+		isSubmittingWithData = true;
+
+		const formData = new FormData();
+		formData.append('entityData', JSON.stringify(entityData));
+
+		try {
+			const response = await fetch('?/approve', {
+				method: 'POST',
+				body: formData
+			});
+
+			const result = await response.json();
+
+			if (result.type === 'success' || result.data?.success) {
+				showMissingEntitiesModal = false;
+				setTimeout(() => goto('/admin/review'), 1000);
+			}
+		} catch (error) {
+			console.error('Error submitting with entity data:', error);
+		} finally {
+			isSubmittingWithData = false;
+		}
+	}
+
+	function handleModalCancel() {
+		showMissingEntitiesModal = false;
+		missingEntities = null;
+	}
 </script>
+
+<svelte:head>
+	<title>Review Goal | Goal Guessr</title>
+</svelte:head>
 
 <div class="min-h-screen p-8">
 	<div class="max-w-4xl mx-auto">
@@ -36,9 +88,13 @@
 			</div>
 		</div>
 
-		{#if form?.success}
+		{#if form?.success || isSubmittingWithData}
 			<div class="bg-primary/20 border border-primary text-primary p-4 rounded-lg mb-6">
-				Goal {form.action} successfully! Redirecting...
+				{#if isSubmittingWithData}
+					Creating entities and approving goal...
+				{:else}
+					Goal {form?.action} successfully! Redirecting...
+				{/if}
 			</div>
 		{/if}
 
@@ -183,8 +239,16 @@
 				<div class="p-6 border-t border-border flex gap-4">
 					<form method="POST" action="?/approve" use:enhance={() => {
 						processingAction = 'approve';
-						return async ({ update }) => {
+						return async ({ result, update }) => {
 							processingAction = null;
+
+							// Check if server returned needsEntityData (missing entities)
+							if (result.type === 'success' && result.data?.needsEntityData) {
+								missingEntities = result.data.missingEntities as MissingEntities;
+								showMissingEntitiesModal = true;
+								return; // Don't call update, we'll handle this with the modal
+							}
+
 							await update();
 						};
 					}} class="flex-1">
@@ -249,3 +313,12 @@
 		</div>
 	</div>
 </div>
+
+{#if showMissingEntitiesModal && missingEntities}
+	<MissingEntitiesModal
+		{missingEntities}
+		onConfirm={handleEntityDataConfirm}
+		onCancel={handleModalCancel}
+		isSubmitting={isSubmittingWithData}
+	/>
+{/if}

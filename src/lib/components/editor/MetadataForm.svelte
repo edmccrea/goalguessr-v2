@@ -86,8 +86,13 @@
   let scorerSuggestions = $state<Suggestion[]>([]);
   let opponentSuggestions = $state<Suggestion[]>([]);
   let competitionSuggestions = $state<Suggestion[]>([]);
+  let isTeamLoading = $state(false);
+  let isScorerLoading = $state(false);
+  let isOpponentLoading = $state(false);
+  let isCompetitionLoading = $state(false);
 
   async function searchTeams(query: string) {
+    isTeamLoading = true;
     try {
       const params = new URLSearchParams({ q: query });
       if (metadata.isInternational) {
@@ -101,10 +106,13 @@
       teamSuggestions = data.suggestions ?? [];
     } catch {
       teamSuggestions = [];
+    } finally {
+      isTeamLoading = false;
     }
   }
 
   async function searchScorers(query: string) {
+    isScorerLoading = true;
     try {
       const res = await fetch(
         `/api/search/players?q=${encodeURIComponent(query)}`,
@@ -113,10 +121,13 @@
       scorerSuggestions = data.suggestions ?? [];
     } catch {
       scorerSuggestions = [];
+    } finally {
+      isScorerLoading = false;
     }
   }
 
   async function searchOpponents(query: string) {
+    isOpponentLoading = true;
     try {
       const params = new URLSearchParams({ q: query });
       if (metadata.isInternational) {
@@ -130,10 +141,13 @@
       opponentSuggestions = data.suggestions ?? [];
     } catch {
       opponentSuggestions = [];
+    } finally {
+      isOpponentLoading = false;
     }
   }
 
   async function searchCompetitions(query: string) {
+    isCompetitionLoading = true;
     try {
       const params = new URLSearchParams({ q: query });
       if (metadata.isInternational) {
@@ -147,6 +161,8 @@
       competitionSuggestions = data.suggestions ?? [];
     } catch {
       competitionSuggestions = [];
+    } finally {
+      isCompetitionLoading = false;
     }
   }
 </script>
@@ -214,6 +230,7 @@
         placeholder="e.g. Manchester United"
         suggestions={teamSuggestions}
         onSearch={searchTeams}
+        isLoading={isTeamLoading}
       />
     </div>
 
@@ -281,6 +298,7 @@
         placeholder="e.g. Lionel Messi"
         suggestions={scorerSuggestions}
         onSearch={searchScorers}
+        isLoading={isScorerLoading}
       />
     </div>
 
@@ -473,6 +491,7 @@
         placeholder="e.g. Champions League Final"
         suggestions={competitionSuggestions}
         onSearch={searchCompetitions}
+        isLoading={isCompetitionLoading}
       />
     </div>
 
@@ -506,6 +525,7 @@
         placeholder="e.g. Bayern Munich"
         suggestions={opponentSuggestions}
         onSearch={searchOpponents}
+        isLoading={isOpponentLoading}
       />
     </div>
 

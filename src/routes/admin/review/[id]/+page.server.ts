@@ -2,7 +2,14 @@ import { db } from '$lib/server/db';
 import { goals, users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { error, fail } from '@sveltejs/kit';
-import { processGoalEntities } from '$lib/server/sync';
+import {
+	checkMissingEntities,
+	processGoalEntitiesWithData,
+	type MissingEntities,
+	type TeamData,
+	type PlayerData,
+	type CompetitionData
+} from '$lib/server/sync';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -35,20 +42,60 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	approve: async ({ params, locals }) => {
+	approve: async ({ params, locals, request }) => {
 		const goal = await db.select().from(goals).where(eq(goals.id, params.id)).get();
 
 		if (!goal) {
 			return fail(404, { error: 'Goal not found' });
 		}
 
-		// Add any missing teams, players, or competitions to the database
-		await processGoalEntities({
-			team: goal.team,
-			scorer: goal.scorer,
-			opponent: goal.opponent,
-			competition: goal.competition
-		});
+		const formData = await request.formData();
+		const entityDataJson = formData.get('entityData');
+
+		// If no entity data provided, check for missing entities first
+		if (!entityDataJson) {
+			const missing = await checkMissingEntities({
+				team: goal.team,
+				scorer: goal.scorer,
+				opponent: goal.opponent,
+				competition: goal.competition
+			});
+
+			// If there are missing entities, return them to the frontend
+			if (Object.keys(missing).length > 0) {
+				return {
+					needsEntityData: true,
+					missingEntities: missing as MissingEntities
+				};
+			}
+		}
+
+		// Parse entity data if provided
+		let entityData: {
+			team?: TeamData;
+			player?: PlayerData;
+			opponent?: TeamData;
+			competition?: CompetitionData;
+		} = {};
+
+		if (entityDataJson && typeof entityDataJson === 'string') {
+			try {
+				entityData = JSON.parse(entityDataJson);
+			} catch {
+				return fail(400, { error: 'Invalid entity data format' });
+			}
+		}
+
+		// Process entities with provided data
+		await processGoalEntitiesWithData(
+			{
+				team: goal.team,
+				scorer: goal.scorer,
+				opponent: goal.opponent,
+				competition: goal.competition
+			},
+			entityData
+		);
 
 		await db
 			.update(goals)

@@ -28,9 +28,12 @@
 	// Suggestions for autocomplete
 	let teamSuggestions = $state<Suggestion[]>([]);
 	let scorerSuggestions = $state<Suggestion[]>([]);
+	let isTeamLoading = $state(false);
+	let isScorerLoading = $state(false);
 
 	// Search functions for autocomplete
 	async function searchTeams(query: string) {
+		isTeamLoading = true;
 		const params = new URLSearchParams({ q: query });
 		if (data.isInternational) params.set('international', 'true');
 
@@ -40,16 +43,21 @@
 			teamSuggestions = result.suggestions ?? [];
 		} catch {
 			teamSuggestions = [];
+		} finally {
+			isTeamLoading = false;
 		}
 	}
 
 	async function searchPlayers(query: string) {
+		isScorerLoading = true;
 		try {
 			const res = await fetch(`/api/search/players?q=${encodeURIComponent(query)}`);
 			const result = await res.json();
 			scorerSuggestions = result.suggestions ?? [];
 		} catch {
 			scorerSuggestions = [];
+		} finally {
+			isScorerLoading = false;
 		}
 	}
 
@@ -69,6 +77,8 @@
 		isSubmitting = false;
 		teamSuggestions = [];
 		scorerSuggestions = [];
+		isTeamLoading = false;
+		isScorerLoading = false;
 		mounted = true;
 	});
 
@@ -453,6 +463,7 @@
 									disabled={isSubmitting}
 									suggestions={teamSuggestions}
 									onSearch={searchTeams}
+									isLoading={isTeamLoading}
 								/>
 							</div>
 
@@ -495,6 +506,7 @@
 									disabled={isSubmitting}
 									suggestions={scorerSuggestions}
 									onSearch={searchPlayers}
+									isLoading={isScorerLoading}
 								/>
 							</div>
 						</div>
