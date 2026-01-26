@@ -4,6 +4,7 @@ import { db } from '$lib/server/db';
 import { goals } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import type { AnimationData } from '$lib/server/db/schema';
+import { checkSubmissionLimit, recordSubmission } from '$lib/server/rate-limit';
 
 interface GoalSubmission {
 	team: string;
@@ -22,6 +23,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	// Require authenticated user
 	if (!locals.user) {
 		return json({ error: 'You must be logged in to submit a goal' }, { status: 401 });
+	}
+
+	// Check submission rate limit (admins are exempt)
+	if (!locals.user.isAdmin) {
+		const limit = checkSubmissionLimit(locals.user.id);
+		if (!limit.allowed) {
+			const resetMinutes = Math.ceil(limit.resetInMs / 60000);
+			return json(
+				{
+					error: `You've reached the submission limit (10 per hour). Try again in ${resetMinutes} minute${resetMinutes === 1 ? '' : 's'}.`
+				},
+				{ status: 429 }
+			);
+		}
 	}
 
 	try {
@@ -98,6 +113,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				})
 				.where(eq(goals.id, body.resubmitId));
 
+			// Record submission for rate limiting (admins exempt)
+			if (!locals.user.isAdmin) {
+				recordSubmission(locals.user.id);
+			}
+
 			return json({ success: true, id: body.resubmitId, resubmitted: true }, { status: 200 });
 		}
 
@@ -119,6 +139,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			submittedBy: locals.user.id,
 			submittedByUsername: locals.user.username
 		});
+
+		// Record submission for rate limiting (admins exempt)
+		if (!locals.user.isAdmin) {
+			recordSubmission(locals.user.id);
+		}
 
 		return json({ success: true, id }, { status: 201 });
 	} catch (error) {
