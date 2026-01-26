@@ -38,6 +38,10 @@
 	const adminCount = $derived(data.users.filter((u) => u.isAdmin).length);
 </script>
 
+<svelte:head>
+	<title>Users | Goal Guessr</title>
+</svelte:head>
+
 <div class="min-h-[calc(100vh-3.5rem)] relative overflow-hidden">
 	<!-- Animated background elements -->
 	<div class="absolute inset-0 overflow-hidden pointer-events-none">

@@ -16,6 +16,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Register | Goal Guessr</title>
+</svelte:head>
+
 <div class="relative min-h-screen overflow-hidden">
 	<!-- Animated background elements -->
 	<div class="absolute inset-0 overflow-hidden pointer-events-none">

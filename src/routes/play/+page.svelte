@@ -7,6 +7,10 @@
 	let isResettingAll = $state(false);
 </script>
 
+<svelte:head>
+	<title>Play | Goal Guessr</title>
+</svelte:head>
+
 <!-- This page now only shows dev tools when accessed via ?dev -->
 <!-- Normal navigation redirects to the appropriate round -->
 

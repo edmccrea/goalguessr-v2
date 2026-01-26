@@ -2,6 +2,10 @@
 	let { data } = $props();
 </script>
 
+<svelte:head>
+	<title>Admin | Goal Guessr</title>
+</svelte:head>
+
 <div class="min-h-[calc(100vh-3.5rem)] relative overflow-hidden">
 	<!-- Animated background elements -->
 	<div class="absolute inset-0 overflow-hidden pointer-events-none">
