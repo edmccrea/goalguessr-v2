@@ -13,6 +13,9 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
 </svelte:head>
 
 <!-- Navigation loading indicator -->
@@ -32,7 +35,7 @@
 		<div class="flex flex-col sm:flex-row items-center justify-between gap-6">
 			<div class="flex items-center gap-3">
 				<img src={favicon} alt="Top Bins Daily" class="w-10 h-10" />
-				<span class="font-bold text-lg">Top Bins Daily</span>
+				<span class="font-bold text-lg tracking-tight">Top Bins <span class="text-primary">Daily</span></span>
 			</div>
 
 			<div class="flex gap-8 text-sm">

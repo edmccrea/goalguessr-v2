@@ -2,20 +2,26 @@
   <!-- Background circle -->
   <circle cx="64" cy="64" r="60" fill="#16a34a"/>
 
-  <!-- Target rings -->
-  <circle cx="64" cy="64" r="40" fill="none" stroke="white" stroke-width="4" opacity="0.3"/>
-  <circle cx="64" cy="64" r="24" fill="none" stroke="white" stroke-width="4" opacity="0.5"/>
+  <!-- Goal frame -->
+  <rect x="24" y="28" width="80" height="64" rx="3" fill="none" stroke="white" stroke-width="5" stroke-linejoin="round"/>
 
-  <!-- Center ball -->
-  <circle cx="64" cy="64" r="14" fill="white"/>
+  <!-- Net lines - vertical -->
+  <line x1="40" y1="28" x2="40" y2="92" stroke="white" stroke-width="1.5" opacity="0.35"/>
+  <line x1="56" y1="28" x2="56" y2="92" stroke="white" stroke-width="1.5" opacity="0.35"/>
+  <line x1="72" y1="28" x2="72" y2="92" stroke="white" stroke-width="1.5" opacity="0.35"/>
+  <line x1="88" y1="28" x2="88" y2="92" stroke="white" stroke-width="1.5" opacity="0.35"/>
 
-  <!-- Crosshair lines -->
-  <line x1="64" y1="20" x2="64" y2="44" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <line x1="64" y1="84" x2="64" y2="108" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <line x1="20" y1="64" x2="44" y2="64" stroke="white" stroke-width="4" stroke-linecap="round"/>
-  <line x1="84" y1="64" x2="108" y2="64" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Net lines - horizontal -->
+  <line x1="24" y1="44" x2="104" y2="44" stroke="white" stroke-width="1.5" opacity="0.35"/>
+  <line x1="24" y1="60" x2="104" y2="60" stroke="white" stroke-width="1.5" opacity="0.35"/>
+  <line x1="24" y1="76" x2="104" y2="76" stroke="white" stroke-width="1.5" opacity="0.35"/>
 
-  <!-- Question mark badge -->
-  <circle cx="98" cy="30" r="16" fill="#f97316"/>
-  <text x="98" y="37" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" font-weight="bold" fill="white">?</text>
+  <!-- Question mark badge in top corner -->
+  <circle cx="88" cy="42" r="18" fill="white"/>
+  <text x="88" y="50" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="26" font-weight="800" fill="#16a34a">?</text>
+
+  <!-- Impact burst lines -->
+  <line x1="103" y1="30" x2="110" y2="24" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+  <line x1="106" y1="40" x2="114" y2="38" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="96" y1="25" x2="100" y2="17" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
 </svg>

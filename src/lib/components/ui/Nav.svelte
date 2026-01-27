@@ -26,7 +26,7 @@
           alt="Top Bins Daily"
           class="w-8 h-8 transition-transform group-hover:scale-105 group-hover:rotate-3"
         />
-        <span class="font-bold text-lg text-text">Top Bins Daily</span>
+        <span class="font-bold text-lg text-text tracking-tight">Top Bins <span class="text-primary">Daily</span></span>
       </a>
 
       <!-- Desktop Nav Links -->
