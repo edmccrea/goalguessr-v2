@@ -6,7 +6,6 @@
 	import { cubicOut, backOut, elasticOut } from 'svelte/easing';
 	import { Spring } from 'svelte/motion';
 	import { inView } from 'motion';
-	import { PUBLIC_FEATURE_LEADERBOARD } from '$env/static/public';
 	import GoalAnimation from '$lib/components/animation/GoalAnimation.svelte';
 	import { sampleAnimation } from '$lib/sample-animation';
 	import favicon from '$lib/assets/favicon.svg';
@@ -14,7 +13,6 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const showLeaderboard = PUBLIC_FEATURE_LEADERBOARD === 'true';
 	const showStats = data.stats !== null;
 
 	let mounted = $state(false);
@@ -394,30 +392,6 @@
 	</div>
 </section>
 
-<!-- Footer -->
-<footer class="py-12 px-6 border-t border-border bg-surface">
-	<div class="max-w-5xl mx-auto">
-		<div class="flex flex-col sm:flex-row items-center justify-between gap-6">
-			<div class="flex items-center gap-3">
-				<img src={favicon} alt="Goal Guessr" class="w-10 h-10" />
-				<span class="font-bold text-lg">Goal Guessr</span>
-			</div>
-
-			<div class="flex gap-8 text-sm">
-				<a href="/play" class="text-text-muted hover:text-primary transition-colors">Play</a>
-				{#if showLeaderboard}
-					<a href="/leaderboard" class="text-text-muted hover:text-primary transition-colors">Leaderboard</a>
-				{/if}
-				<a href="/editor" class="text-text-muted hover:text-primary transition-colors">Create</a>
-				<a href="/profile" class="text-text-muted hover:text-primary transition-colors">Profile</a>
-			</div>
-		</div>
-
-		<div class="mt-8 pt-8 border-t border-border text-center text-text-muted text-sm">
-			Test your football knowledge, one goal at a time.
-		</div>
-	</div>
-</footer>
 
 <style>
 	.perspective-1000 {
