@@ -4,7 +4,7 @@ import { db } from '$lib/server/db';
 import { sessions, users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 
-const SESSION_COOKIE = 'goal-guessr-session';
+const SESSION_COOKIE = 'top-bins-daily-session';
 
 function generateId(): string {
 	return crypto.randomUUID();

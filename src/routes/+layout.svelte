@@ -31,8 +31,8 @@
 	<div class="max-w-5xl mx-auto">
 		<div class="flex flex-col sm:flex-row items-center justify-between gap-6">
 			<div class="flex items-center gap-3">
-				<img src={favicon} alt="Goal Guessr" class="w-10 h-10" />
-				<span class="font-bold text-lg">Goal Guessr</span>
+				<img src={favicon} alt="Top Bins Daily" class="w-10 h-10" />
+				<span class="font-bold text-lg">Top Bins Daily</span>
 			</div>
 
 			<div class="flex gap-8 text-sm">

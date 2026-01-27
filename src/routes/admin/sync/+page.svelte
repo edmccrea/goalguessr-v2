@@ -16,7 +16,7 @@
 </script>
 
 <svelte:head>
-	<title>Sync Data | Goal Guessr</title>
+	<title>Sync Data | Top Bins Daily</title>
 </svelte:head>
 
 <div class="min-h-[calc(100vh-3.5rem)] relative overflow-hidden">

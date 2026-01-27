@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head>
-	<title>Login | Goal Guessr</title>
+	<title>Login | Top Bins Daily</title>
 </svelte:head>
 
 <div class="relative min-h-screen overflow-hidden">

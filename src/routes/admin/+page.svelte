@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>Admin | Goal Guessr</title>
+	<title>Admin | Top Bins Daily</title>
 </svelte:head>
 
 <div class="min-h-[calc(100vh-3.5rem)] relative overflow-hidden">

@@ -20,7 +20,7 @@ export interface GameState {
 	totalScore: number;
 }
 
-const STORAGE_KEY = 'goal-guessr-game-state';
+const STORAGE_KEY = 'top-bins-daily-game-state';
 
 function getToday(): string {
 	return new Date().toISOString().split('T')[0];

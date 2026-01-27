@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>Leaderboard | Goal Guessr</title>
+	<title>Leaderboard | Top Bins Daily</title>
 </svelte:head>
 
 <div class="relative min-h-screen overflow-hidden">

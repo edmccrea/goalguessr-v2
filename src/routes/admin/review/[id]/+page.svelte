@@ -67,7 +67,7 @@
 </script>
 
 <svelte:head>
-	<title>Review Goal | Goal Guessr</title>
+	<title>Review Goal | Top Bins Daily</title>
 </svelte:head>
 
 <div class="min-h-screen p-8">

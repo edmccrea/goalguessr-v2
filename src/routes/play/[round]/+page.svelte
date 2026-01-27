@@ -126,7 +126,7 @@
 </script>
 
 <svelte:head>
-	<title>Round {data.roundNumber} - Goal Guessr</title>
+	<title>Round {data.roundNumber} - Top Bins Daily</title>
 </svelte:head>
 
 <div class="min-h-[calc(100vh-3.5rem)] p-4 md:p-8">

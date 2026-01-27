@@ -22,7 +22,7 @@
 	function generateShareText(): string {
 		const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-		let text = `Goal Guessr - ${today}\n\n`;
+		let text = `Top Bins Daily - ${today}\n\n`;
 
 		data.roundResults.forEach((round, idx) => {
 			if (round.completed && round.guess) {
@@ -36,7 +36,7 @@
 		});
 
 		text += `\nTotal: ${data.totalScore}/120 pts`;
-		text += '\n\nPlay at goalguessr.com';
+		text += '\n\nPlay at topbinsdaily.com';
 
 		return text;
 	}
@@ -48,7 +48,7 @@
 		if (navigator.share) {
 			try {
 				await navigator.share({
-					title: 'Goal Guessr Results',
+					title: 'Top Bins Daily Results',
 					text: shareText
 				});
 				shareStatus = 'copied';
@@ -75,7 +75,7 @@
 </script>
 
 <svelte:head>
-	<title>Results | Goal Guessr</title>
+	<title>Results | Top Bins Daily</title>
 </svelte:head>
 
 <div class="min-h-[calc(100vh-3.5rem)] relative overflow-hidden">
@@ -459,7 +459,7 @@
 								<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 									<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
 								</svg>
-								Enjoying Goal Guessr? Buy me a coffee
+								Enjoying Top Bins Daily? Buy me a coffee
 							</a>
 						</div>
 					{/if}

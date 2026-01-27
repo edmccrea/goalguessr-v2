@@ -91,7 +91,7 @@
 </script>
 
 <svelte:head>
-	<title>Goal Guessr - The Daily Football Challenge</title>
+	<title>Top Bins Daily - The Daily Football Challenge</title>
 </svelte:head>
 
 <!-- Hero Section -->

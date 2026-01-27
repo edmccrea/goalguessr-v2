@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<title>Play | Goal Guessr</title>
+	<title>Play | Top Bins Daily</title>
 </svelte:head>
 
 <!-- This page now only shows dev tools when accessed via ?dev -->

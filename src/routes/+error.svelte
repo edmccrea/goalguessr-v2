@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Error {$page.status} | Goal Guessr</title>
+	<title>Error {$page.status} | Top Bins Daily</title>
 </svelte:head>
 
 <div class="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-6 py-12">

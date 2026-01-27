@@ -42,7 +42,7 @@
 </script>
 
 <svelte:head>
-	<title>My Submissions | Goal Guessr</title>
+	<title>My Submissions | Top Bins Daily</title>
 </svelte:head>
 
 <div class="relative min-h-screen overflow-hidden">

@@ -22,7 +22,7 @@
 </script>
 
 <svelte:head>
-	<title>Review Queue | Goal Guessr</title>
+	<title>Review Queue | Top Bins Daily</title>
 </svelte:head>
 
 <div class="min-h-[calc(100vh-3.5rem)] relative overflow-hidden">

@@ -23,10 +23,10 @@
       <a href="/" class="group flex items-center gap-2.5">
         <img
           src={favicon}
-          alt="Goal Guessr"
+          alt="Top Bins Daily"
           class="w-8 h-8 transition-transform group-hover:scale-105 group-hover:rotate-3"
         />
-        <span class="font-bold text-lg text-text">Goal Guessr</span>
+        <span class="font-bold text-lg text-text">Top Bins Daily</span>
       </a>
 
       <!-- Desktop Nav Links -->
