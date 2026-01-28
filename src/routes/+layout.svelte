@@ -21,13 +21,13 @@
 	<meta name="description" content="Test your football knowledge with animated goal diagrams. Guess the team, year, and scorer — new goals every day." />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="Top Bins Daily" />
-	<meta property="og:title" content="Top Bins Daily - The Daily Football Challenge" />
+	<meta property="og:title" content="Top Bins Daily - Test Your Football Knowledge Every Day" />
 	<meta property="og:description" content="Test your football knowledge with animated goal diagrams. Guess the team, year, and scorer — new goals every day." />
 	<meta property="og:image" content="https://topbins.app/og-image.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Top Bins Daily - The Daily Football Challenge" />
+	<meta name="twitter:title" content="Top Bins Daily - Test Your Football Knowledge Every Day" />
 	<meta name="twitter:description" content="Test your football knowledge with animated goal diagrams. Guess the team, year, and scorer — new goals every day." />
 	<meta name="twitter:image" content="https://topbins.app/og-image.png" />
 </svelte:head>
