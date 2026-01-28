@@ -91,19 +91,34 @@
   let isOpponentLoading = $state(false);
   let isCompetitionLoading = $state(false);
 
+  // Client-side search cache to avoid redundant API calls
+  const searchCache = new Map<string, Suggestion[]>();
+
+  async function cachedFetch(url: string): Promise<Suggestion[]> {
+    const cached = searchCache.get(url);
+    if (cached) return cached;
+
+    const res = await fetch(url);
+    const data = await res.json();
+    const suggestions: Suggestion[] = data.suggestions ?? [];
+    searchCache.set(url, suggestions);
+    return suggestions;
+  }
+
+  function buildTeamSearchUrl(query: string): string {
+    const params = new URLSearchParams({ q: query });
+    if (metadata.isInternational) {
+      params.set("international", "true");
+    } else if (!showInternational) {
+      params.set("international", "false");
+    }
+    return `/api/search/teams?${params}`;
+  }
+
   async function searchTeams(query: string) {
     isTeamLoading = true;
     try {
-      const params = new URLSearchParams({ q: query });
-      if (metadata.isInternational) {
-        params.set("international", "true");
-      } else if (!showInternational) {
-        // When international feature is disabled, only show club teams
-        params.set("international", "false");
-      }
-      const res = await fetch(`/api/search/teams?${params}`);
-      const data = await res.json();
-      teamSuggestions = data.suggestions ?? [];
+      teamSuggestions = await cachedFetch(buildTeamSearchUrl(query));
     } catch {
       teamSuggestions = [];
     } finally {
@@ -114,11 +129,9 @@
   async function searchScorers(query: string) {
     isScorerLoading = true;
     try {
-      const res = await fetch(
+      scorerSuggestions = await cachedFetch(
         `/api/search/players?q=${encodeURIComponent(query)}`,
       );
-      const data = await res.json();
-      scorerSuggestions = data.suggestions ?? [];
     } catch {
       scorerSuggestions = [];
     } finally {
@@ -129,16 +142,7 @@
   async function searchOpponents(query: string) {
     isOpponentLoading = true;
     try {
-      const params = new URLSearchParams({ q: query });
-      if (metadata.isInternational) {
-        params.set("international", "true");
-      } else if (!showInternational) {
-        // When international feature is disabled, only show club teams
-        params.set("international", "false");
-      }
-      const res = await fetch(`/api/search/teams?${params}`);
-      const data = await res.json();
-      opponentSuggestions = data.suggestions ?? [];
+      opponentSuggestions = await cachedFetch(buildTeamSearchUrl(query));
     } catch {
       opponentSuggestions = [];
     } finally {
@@ -153,12 +157,9 @@
       if (metadata.isInternational) {
         params.set("international", "true");
       } else if (!showInternational) {
-        // When international feature is disabled, only show club competitions
         params.set("international", "false");
       }
-      const res = await fetch(`/api/search/competitions?${params}`);
-      const data = await res.json();
-      competitionSuggestions = data.suggestions ?? [];
+      competitionSuggestions = await cachedFetch(`/api/search/competitions?${params}`);
     } catch {
       competitionSuggestions = [];
     } finally {

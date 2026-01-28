@@ -55,7 +55,7 @@
 			searchTimeout = setTimeout(() => {
 				onSearch?.(query);
 				isOpen = true;
-			}, 200);
+			}, 350);
 		} else {
 			isOpen = false;
 		}
