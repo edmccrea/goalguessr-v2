@@ -5,7 +5,10 @@
 	import { cubicOut, backOut } from 'svelte/easing';
 	import { GoalAnimation } from '$lib/components/animation';
 	import Combobox from '$lib/components/Combobox.svelte';
+	import { PUBLIC_FEATURE_INTERNATIONAL } from '$env/static/public';
 	import type { AnimationData } from '$lib/server/db/schema';
+
+	const showInternational = PUBLIC_FEATURE_INTERNATIONAL === 'true';
 
 	interface Suggestion {
 		id: string;
@@ -35,7 +38,11 @@
 	async function searchTeams(query: string) {
 		isTeamLoading = true;
 		const params = new URLSearchParams({ q: query });
-		if (data.isInternational) params.set('international', 'true');
+		if (data.isInternational) {
+			params.set('international', 'true');
+		} else if (!showInternational) {
+			params.set('international', 'false');
+		}
 
 		try {
 			const res = await fetch(`/api/search/teams?${params}`);
