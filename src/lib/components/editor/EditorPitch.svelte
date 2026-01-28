@@ -668,6 +668,7 @@
 					<FlagSelector
 						onselect={(url) => addFirstPlayer(url)}
 						oncancel={() => (isAddingFirstPlayer = false)}
+						allowCustomUrl={false}
 					/>
 				{:else}
 					<button

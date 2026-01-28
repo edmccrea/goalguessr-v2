@@ -80,7 +80,8 @@
             : 'hover:bg-surface-dim'}"
         >
           <div
-            class="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-primary-hover text-white flex items-center justify-center text-xs font-semibold uppercase shadow-sm"
+            class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold uppercase shadow-sm {user.avatarColor ? 'text-white' : 'bg-gradient-to-br from-primary to-primary-hover text-white'}"
+            style={user.avatarColor ? `background-color: ${user.avatarColor}` : ''}
           >
             {user.username?.charAt(0) ?? "?"}
           </div>

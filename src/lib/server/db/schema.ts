@@ -6,7 +6,8 @@ export const users = sqliteTable('users', {
 	email: text('email').unique(),
 	passwordHash: text('password_hash'),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-	isAdmin: integer('is_admin', { mode: 'boolean' }).default(false)
+	isAdmin: integer('is_admin', { mode: 'boolean' }).default(false),
+	avatarColor: text('avatar_color')
 });
 
 export const sessions = sqliteTable('sessions', {

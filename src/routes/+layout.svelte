@@ -45,6 +45,7 @@
 				{/if}
 				<a href="/editor" class="text-text-muted hover:text-primary transition-colors">Create</a>
 				<a href="/profile" class="text-text-muted hover:text-primary transition-colors">Profile</a>
+				<a href="/contact" class="text-text-muted hover:text-primary transition-colors">Contact</a>
 			</div>
 		</div>
 

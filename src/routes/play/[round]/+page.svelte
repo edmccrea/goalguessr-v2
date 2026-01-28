@@ -186,7 +186,7 @@
 					class="lg:col-span-3"
 					in:scale={{ start: 0.95, duration: 500, delay: 100, easing: backOut }}
 				>
-					<div class="aspect-[16/10] rounded-2xl overflow-hidden border border-border shadow-lg bg-surface">
+					<div class="aspect-[16/10] rounded-2xl overflow-hidden border border-border shadow-lg bg-[#2d8a4e]">
 						<GoalAnimation animation={data.animationData as AnimationData} autoPlay={true} loop={true} />
 					</div>
 					<p class="text-center text-text-muted text-sm mt-3">
@@ -429,8 +429,8 @@
 								</svg>
 							</div>
 							<div>
-								<h2 class="text-lg font-bold">Make your guess</h2>
-								<p class="text-xs text-text-muted">Answer quickly for a speed bonus!</p>
+								<h2 class="text-lg font-bold">Who scored and when?</h2>
+								<p class="text-xs text-text-muted">Guess the team, player, and year — answer quickly for a speed bonus!</p>
 							</div>
 						</div>
 

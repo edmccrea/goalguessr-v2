@@ -6,9 +6,10 @@
 		onselect: (url: string) => void;
 		oncancel: () => void;
 		placeholder?: string;
+		allowCustomUrl?: boolean;
 	}
 
-	let { value = $bindable(), onselect, oncancel, placeholder = 'Search country...' }: Props = $props();
+	let { value = $bindable(), onselect, oncancel, placeholder = 'Search country...', allowCustomUrl = true }: Props = $props();
 
 	let searchQuery = $state('');
 	let showDropdown = $state(true);
@@ -59,35 +60,48 @@
 			selectedIndex = 0;
 		}
 	});
+
+	// Close on outside click
+	let containerEl: HTMLDivElement | undefined = $state();
+
+	function handlePointerDown(e: PointerEvent) {
+		if (containerEl && !containerEl.contains(e.target as Node)) {
+			oncancel();
+		}
+	}
 </script>
 
-<div class="relative">
+<svelte:window onpointerdown={handlePointerDown} />
+
+<div class="relative" bind:this={containerEl}>
 	<div class="flex flex-col gap-2">
 		<!-- Mode toggle -->
-		<div class="flex gap-2 text-xs">
-			<button
-				type="button"
-				onclick={() => { isCustomUrl = false; }}
-				class="px-2 py-1 rounded transition-colors"
-				class:bg-primary={!isCustomUrl}
-				class:text-white={!isCustomUrl}
-				class:bg-surface-dim={isCustomUrl}
-				class:text-text-muted={isCustomUrl}
-			>
-				Flag
-			</button>
-			<button
-				type="button"
-				onclick={() => { isCustomUrl = true; }}
-				class="px-2 py-1 rounded transition-colors"
-				class:bg-primary={isCustomUrl}
-				class:text-white={isCustomUrl}
-				class:bg-surface-dim={!isCustomUrl}
-				class:text-text-muted={!isCustomUrl}
-			>
-				Custom URL
-			</button>
-		</div>
+		{#if allowCustomUrl}
+			<div class="flex gap-2 text-xs">
+				<button
+					type="button"
+					onclick={() => { isCustomUrl = false; }}
+					class="px-2 py-1 rounded transition-colors"
+					class:bg-primary={!isCustomUrl}
+					class:text-white={!isCustomUrl}
+					class:bg-surface-dim={isCustomUrl}
+					class:text-text-muted={isCustomUrl}
+				>
+					Flag
+				</button>
+				<button
+					type="button"
+					onclick={() => { isCustomUrl = true; }}
+					class="px-2 py-1 rounded transition-colors"
+					class:bg-primary={isCustomUrl}
+					class:text-white={isCustomUrl}
+					class:bg-surface-dim={!isCustomUrl}
+					class:text-text-muted={!isCustomUrl}
+				>
+					Custom URL
+				</button>
+			</div>
+		{/if}
 
 		{#if isCustomUrl}
 			<!-- svelte-ignore a11y_autofocus -->

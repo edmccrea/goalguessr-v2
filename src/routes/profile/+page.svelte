@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { fly, scale } from 'svelte/transition';
 	import { cubicOut, backOut } from 'svelte/easing';
 	import Spinner from '$lib/components/ui/Spinner.svelte';
@@ -8,11 +9,59 @@
 
 	let { data }: { data: PageData } = $props();
 	let isLoggingOut = $state(false);
+	let avatarColor = $state(data.user?.avatarColor ?? null);
+	let isSavingColor = $state(false);
+	let showColorPicker = $state(false);
+	let pickerRef: HTMLDivElement | undefined = $state();
+
+	function handleClickOutside(e: MouseEvent) {
+		if (pickerRef && !pickerRef.contains(e.target as Node)) {
+			showColorPicker = false;
+		}
+	}
+
+	const presetColors = [
+		{ hex: '#EF4444', name: 'Red' },
+		{ hex: '#F97316', name: 'Orange' },
+		{ hex: '#EAB308', name: 'Yellow' },
+		{ hex: '#22C55E', name: 'Green' },
+		{ hex: '#14B8A6', name: 'Teal' },
+		{ hex: '#3B82F6', name: 'Blue' },
+		{ hex: '#6366F1', name: 'Indigo' },
+		{ hex: '#A855F7', name: 'Purple' },
+		{ hex: '#EC4899', name: 'Pink' },
+		{ hex: '#6B7280', name: 'Gray' }
+	];
+
+	async function selectColor(hex: string) {
+		if (isSavingColor) return;
+		const previous = avatarColor;
+		avatarColor = hex;
+		isSavingColor = true;
+		try {
+			const res = await fetch('/api/profile', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ avatarColor: hex })
+			});
+			if (res.ok) {
+				invalidateAll();
+			} else {
+				avatarColor = previous;
+			}
+		} catch {
+			avatarColor = previous;
+		} finally {
+			isSavingColor = false;
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>Profile | Top Bins Daily</title>
 </svelte:head>
+
+<svelte:document onclick={handleClickOutside} />
 
 <div class="relative min-h-screen overflow-hidden">
 	<!-- Animated background elements -->
@@ -77,12 +126,43 @@
 				{#if data.user}
 					<div class="flex items-start justify-between gap-4 flex-wrap">
 						<div class="flex items-center gap-4">
-							<div
-								class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center"
-							>
-								<span class="text-2xl font-bold text-primary"
-									>{data.user.username.charAt(0).toUpperCase()}</span
+							<div class="relative" bind:this={pickerRef}>
+								<button
+									type="button"
+									onclick={() => (showColorPicker = !showColorPicker)}
+									class="w-16 h-16 rounded-2xl flex items-center justify-center cursor-pointer transition-all hover:ring-2 hover:ring-primary/40 hover:ring-offset-2 hover:ring-offset-surface {avatarColor ? '' : 'bg-gradient-to-br from-primary/20 to-primary/10'}"
+									style={avatarColor ? `background-color: ${avatarColor}` : ''}
+									title="Change avatar color"
 								>
+									<span class="text-2xl font-bold {avatarColor ? 'text-white' : 'text-primary'}"
+										>{data.user.username.charAt(0).toUpperCase()}</span
+									>
+								</button>
+								{#if showColorPicker}
+									<div
+										class="absolute top-full left-0 mt-2 w-[220px] p-3 bg-surface border border-border rounded-xl shadow-xl z-50"
+										transition:scale={{ start: 0.95, duration: 150, easing: cubicOut }}
+									>
+										<div class="flex items-center gap-2 mb-2">
+											<span class="text-xs font-medium text-text-muted">Avatar Color</span>
+											{#if isSavingColor}
+												<Spinner size="sm" />
+											{/if}
+										</div>
+										<div class="grid grid-cols-5 gap-2">
+											{#each presetColors as color}
+												<button
+													type="button"
+													onclick={() => selectColor(color.hex)}
+													class="w-9 h-9 rounded-lg transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface {avatarColor === color.hex ? 'ring-2 ring-white scale-110' : ''}"
+													style="background-color: {color.hex}"
+													title={color.name}
+													disabled={isSavingColor}
+												></button>
+											{/each}
+										</div>
+									</div>
+								{/if}
 							</div>
 							<div>
 								<div class="flex items-center gap-2 flex-wrap">

@@ -348,7 +348,7 @@
 	}
 </script>
 
-<div class="relative">
+<div class="relative group w-full h-full">
 	<Pitch width={animation.pitch.width} height={animation.pitch.height}>
 		<!-- Pass/shot lines -->
 		{#each activeEvents as event (event.time + '-' + event.from)}
@@ -398,7 +398,7 @@
 	</Pitch>
 
 	<!-- Playback controls -->
-	<div class="absolute bottom-2 left-2 right-2 flex items-center gap-2 bg-black/50 rounded-lg p-2">
+	<div class="absolute bottom-2 left-2 right-2 flex items-center gap-2 bg-black/50 rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
 		<button
 			onclick={() => (isPlaying = !isPlaying)}
 			class="text-white px-3 py-1 rounded hover:bg-white/20"

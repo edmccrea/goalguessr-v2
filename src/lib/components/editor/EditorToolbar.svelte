@@ -66,6 +66,7 @@
 					bind:value={imageUrlInput}
 					onselect={(url) => addPlayer(url)}
 					oncancel={cancelAddPlayer}
+					allowCustomUrl={false}
 				/>
 			{:else}
 				<button
