@@ -127,6 +127,11 @@
 
 <svelte:head>
 	<title>Round {data.roundNumber} - Top Bins Daily</title>
+	<meta name="description" content="Can you identify this iconic goal? Watch the animated diagram and guess the team, year, and scorer." />
+	<meta property="og:title" content="Round {data.roundNumber} - Top Bins Daily" />
+	<meta property="og:description" content="Can you identify this iconic goal? Watch the animated diagram and guess the team, year, and scorer." />
+	<meta name="twitter:title" content="Round {data.roundNumber} - Top Bins Daily" />
+	<meta name="twitter:description" content="Can you identify this iconic goal? Watch the animated diagram and guess the team, year, and scorer." />
 </svelte:head>
 
 <div class="min-h-[calc(100vh-3.5rem)] p-4 md:p-8">

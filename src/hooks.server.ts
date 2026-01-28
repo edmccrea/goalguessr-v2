@@ -44,6 +44,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 			event.locals.sessionId = sessionId;
 			event.locals.user = null;
 		} else {
+			// Update last active timestamp
+			await db
+				.update(sessions)
+				.set({ lastActiveAt: new Date() })
+				.where(eq(sessions.id, sessionId));
+
 			event.locals.sessionId = sessionId;
 
 			// Load user if session is linked to one

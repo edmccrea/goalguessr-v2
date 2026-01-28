@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
 	id: text('id').primaryKey(),
@@ -13,7 +13,8 @@ export const users = sqliteTable('users', {
 export const sessions = sqliteTable('sessions', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').references(() => users.id),
-	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
+	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+	lastActiveAt: integer('last_active_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
 export const goals = sqliteTable('goals', {
@@ -166,6 +167,16 @@ export const syncLogs = sqliteTable('sync_logs', {
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
 });
 
+// Rate limiting table for persistent rate limits across serverless cold starts
+export const rateLimits = sqliteTable('rate_limits', {
+	key: text('key').notNull(),
+	type: text('type', { enum: ['login', 'register', 'submission'] }).notNull(),
+	count: integer('count').notNull().default(0),
+	windowStart: integer('window_start').notNull()
+}, (table) => [
+	primaryKey({ columns: [table.key, table.type] })
+]);
+
 // Type exports for use in the app
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -180,6 +191,7 @@ export type PlayerTeam = typeof playerTeams.$inferSelect;
 export type PlayerAlias = typeof playerAliases.$inferSelect;
 export type Competition = typeof competitions.$inferSelect;
 export type SyncLog = typeof syncLogs.$inferSelect;
+export type RateLimit = typeof rateLimits.$inferSelect;
 
 // Animation data type
 export interface AnimationData {

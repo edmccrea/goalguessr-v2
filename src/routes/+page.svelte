@@ -92,6 +92,11 @@
 
 <svelte:head>
 	<title>Top Bins Daily - The Daily Football Challenge</title>
+	<meta name="description" content="Think you know football? Watch animated goal diagrams and guess the team, year, and scorer. New challenges every day." />
+	<meta property="og:title" content="Top Bins Daily - The Daily Football Challenge" />
+	<meta property="og:description" content="Think you know football? Watch animated goal diagrams and guess the team, year, and scorer. New challenges every day." />
+	<meta name="twitter:title" content="Top Bins Daily - The Daily Football Challenge" />
+	<meta name="twitter:description" content="Think you know football? Watch animated goal diagrams and guess the team, year, and scorer. New challenges every day." />
 </svelte:head>
 
 <!-- Hero Section -->

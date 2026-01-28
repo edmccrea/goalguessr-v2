@@ -16,6 +16,20 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+
+	<!-- Default meta tags (overridden by individual pages) -->
+	<meta name="description" content="Test your football knowledge with animated goal diagrams. Guess the team, year, and scorer — new goals every day." />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="Top Bins Daily" />
+	<meta property="og:title" content="Top Bins Daily - The Daily Football Challenge" />
+	<meta property="og:description" content="Test your football knowledge with animated goal diagrams. Guess the team, year, and scorer — new goals every day." />
+	<meta property="og:image" content="https://topbins.app/og-image.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Top Bins Daily - The Daily Football Challenge" />
+	<meta name="twitter:description" content="Test your football knowledge with animated goal diagrams. Guess the team, year, and scorer — new goals every day." />
+	<meta name="twitter:image" content="https://topbins.app/og-image.png" />
 </svelte:head>
 
 <!-- Navigation loading indicator -->

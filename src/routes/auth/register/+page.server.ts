@@ -9,7 +9,7 @@ export const actions: Actions = {
 		const rateLimitKey = `register:${clientIp}`;
 
 		// Check rate limit
-		const { allowed, resetInMs } = checkRateLimit(rateLimitKey);
+		const { allowed, resetInMs } = await checkRateLimit(rateLimitKey);
 		if (!allowed) {
 			const resetInMinutes = Math.ceil(resetInMs / 60000);
 			return fail(429, {
@@ -37,7 +37,7 @@ export const actions: Actions = {
 		const result = await registerUser(username, email, password);
 
 		if (!result.success || !result.user) {
-			recordFailedAttempt(rateLimitKey);
+			await recordFailedAttempt(rateLimitKey);
 			return fail(400, {
 				error: result.error ?? 'Registration failed',
 				username,
@@ -46,7 +46,7 @@ export const actions: Actions = {
 		}
 
 		// Clear rate limit on successful registration
-		clearAttempts(rateLimitKey);
+		await clearAttempts(rateLimitKey);
 
 		// Link current session to the new user
 		await linkSessionToUser(locals.sessionId, result.user.id);

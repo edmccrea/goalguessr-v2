@@ -10,6 +10,11 @@
 
 <svelte:head>
 	<title>Leaderboard | Top Bins Daily</title>
+	<meta name="description" content="See who tops the leaderboard on Top Bins Daily. Compare scores and compete with football fans worldwide." />
+	<meta property="og:title" content="Leaderboard | Top Bins Daily" />
+	<meta property="og:description" content="See who tops the leaderboard on Top Bins Daily. Compare scores and compete with football fans worldwide." />
+	<meta name="twitter:title" content="Leaderboard | Top Bins Daily" />
+	<meta name="twitter:description" content="See who tops the leaderboard on Top Bins Daily. Compare scores and compete with football fans worldwide." />
 </svelte:head>
 
 <div class="relative min-h-screen overflow-hidden">

@@ -27,7 +27,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	// Check submission rate limit (admins are exempt)
 	if (!locals.user.isAdmin) {
-		const limit = checkSubmissionLimit(locals.user.id);
+		const limit = await checkSubmissionLimit(locals.user.id);
 		if (!limit.allowed) {
 			const resetMinutes = Math.ceil(limit.resetInMs / 60000);
 			return json(
@@ -115,7 +115,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 			// Record submission for rate limiting (admins exempt)
 			if (!locals.user.isAdmin) {
-				recordSubmission(locals.user.id);
+				await recordSubmission(locals.user.id);
 			}
 
 			return json({ success: true, id: body.resubmitId, resubmitted: true }, { status: 200 });
@@ -142,7 +142,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		// Record submission for rate limiting (admins exempt)
 		if (!locals.user.isAdmin) {
-			recordSubmission(locals.user.id);
+			await recordSubmission(locals.user.id);
 		}
 
 		return json({ success: true, id }, { status: 201 });

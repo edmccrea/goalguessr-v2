@@ -9,7 +9,7 @@ export const actions: Actions = {
 		const rateLimitKey = `login:${clientIp}`;
 
 		// Check rate limit
-		const { allowed, remainingAttempts, resetInMs } = checkRateLimit(rateLimitKey);
+		const { allowed, remainingAttempts, resetInMs } = await checkRateLimit(rateLimitKey);
 		if (!allowed) {
 			const resetInMinutes = Math.ceil(resetInMs / 60000);
 			return fail(429, {
@@ -25,8 +25,8 @@ export const actions: Actions = {
 		const result = await loginUser(email, password);
 
 		if (!result.success || !result.user) {
-			recordFailedAttempt(rateLimitKey);
-			const { remainingAttempts: attemptsLeft } = checkRateLimit(rateLimitKey);
+			await recordFailedAttempt(rateLimitKey);
+			const { remainingAttempts: attemptsLeft } = await checkRateLimit(rateLimitKey);
 
 			let errorMsg = result.error ?? 'Login failed';
 			if (attemptsLeft > 0 && attemptsLeft <= 3) {
@@ -40,7 +40,7 @@ export const actions: Actions = {
 		}
 
 		// Clear rate limit on successful login
-		clearAttempts(rateLimitKey);
+		await clearAttempts(rateLimitKey);
 
 		// Link current session to the user
 		await linkSessionToUser(locals.sessionId, result.user.id);
