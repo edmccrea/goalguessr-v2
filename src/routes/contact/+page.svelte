@@ -115,7 +115,7 @@
 
           <!-- Form Card -->
           <form
-            action="https://formsubmit.co/ed-mccrea@hotmail.co.uk"
+            action="https://formsubmit.co/84bd9ad28cfefa04042ff8b401dbb824"
             method="POST"
             class="bg-surface border border-border rounded-2xl p-6 shadow-lg space-y-5"
             in:fly={{ y: 20, duration: 500, delay: 100, easing: cubicOut }}
