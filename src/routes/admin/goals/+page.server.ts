@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { goals, users, dailyGames, goalQueue } from '$lib/server/db/schema';
+import { goals, users, dailyGames, goalQueue, guesses } from '$lib/server/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import { processGoalEntities } from '$lib/server/sync';
@@ -64,21 +64,25 @@ export const actions: Actions = {
 			return fail(400, { error: 'Goal ID required' });
 		}
 
-		// Check if goal is used in any daily games
-		const usedInGame = await db
-			.select({ id: dailyGames.id })
-			.from(dailyGames)
-			.where(
-				sql`${dailyGames.goal1Id} = ${goalId} OR ${dailyGames.goal2Id} = ${goalId} OR ${dailyGames.goal3Id} = ${goalId}`
-			)
-			.get();
-
-		if (usedInGame) {
-			return fail(400, { error: 'Cannot delete goal that has been used in a daily game' });
-		}
-
 		// Remove from goal queue if present
 		await db.delete(goalQueue).where(eq(goalQueue.goalId, goalId));
+
+		// Remove guesses referencing this goal
+		await db.delete(guesses).where(eq(guesses.goalId, goalId));
+
+		// Null out references in daily games
+		await db
+			.update(dailyGames)
+			.set({ goal1Id: null })
+			.where(eq(dailyGames.goal1Id, goalId));
+		await db
+			.update(dailyGames)
+			.set({ goal2Id: null })
+			.where(eq(dailyGames.goal2Id, goalId));
+		await db
+			.update(dailyGames)
+			.set({ goal3Id: null })
+			.where(eq(dailyGames.goal3Id, goalId));
 
 		// Delete the goal
 		await db.delete(goals).where(eq(goals.id, goalId));
