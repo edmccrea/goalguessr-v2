@@ -15,6 +15,13 @@
       "when": 1769626528029,
       "tag": "0001_superb_professor_monster",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1769976645053,
+      "tag": "0002_dark_agent_brand",
+      "breakpoints": true
     }
   ]
 }

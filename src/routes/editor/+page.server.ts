@@ -1,8 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { goals } from '$lib/server/db/schema';
+import { goals, users } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
-import type { PageServerLoad } from './$types';
+import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
@@ -48,4 +48,19 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		user: locals.user,
 		resubmitGoal
 	};
+};
+
+export const actions: Actions = {
+	markTutorialSeen: async ({ locals }) => {
+		if (!locals.user) {
+			return { error: 'Not authenticated' };
+		}
+
+		await db
+			.update(users)
+			.set({ hasSeenEditorTutorial: true })
+			.where(eq(users.id, locals.user.id));
+
+		return { success: true };
+	}
 };

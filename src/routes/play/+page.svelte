@@ -5,6 +5,7 @@
 	let { data } = $props();
 	let isResetting = $state(false);
 	let isResettingAll = $state(false);
+	let isResettingTutorial = $state(false);
 </script>
 
 <svelte:head>
@@ -65,6 +66,30 @@
 					</button>
 					<p class="text-xs text-text-muted mt-2 text-center">
 						Clears all goals and creates new sample goals
+					</p>
+				</form>
+
+				<form
+					method="POST"
+					action="?/resetTutorial"
+					use:enhance={() => {
+						isResettingTutorial = true;
+						return async ({ update }) => {
+							await update();
+							isResettingTutorial = false;
+							await invalidateAll();
+						};
+					}}
+				>
+					<button
+						type="submit"
+						disabled={isResettingTutorial}
+						class="w-full bg-surface hover:bg-surface-dim border border-border text-text-muted hover:text-text px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
+					>
+						{isResettingTutorial ? 'Resetting...' : 'Reset Editor Tutorial'}
+					</button>
+					<p class="text-xs text-text-muted mt-2 text-center">
+						Shows the editor tutorial again on next visit
 					</p>
 				</form>
 			</div>

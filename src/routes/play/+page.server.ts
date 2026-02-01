@@ -2,7 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
-import { gameResults, guesses } from '$lib/server/db/schema';
+import { gameResults, guesses, users } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getTodaysDailyGame, getOrCreateGameResult, getGuessesForGame, clearAllGameData } from '$lib/server/game';
 
@@ -92,6 +92,23 @@ export const actions: Actions = {
 
 		// Clear all game data and goals - new sample goals will be created on next load
 		await clearAllGameData();
+
+		return { success: true };
+	},
+
+	resetTutorial: async ({ locals }) => {
+		if (!dev) {
+			return { error: 'Reset only available in dev mode' };
+		}
+
+		if (!locals.user) {
+			return { error: 'Not authenticated' };
+		}
+
+		await db
+			.update(users)
+			.set({ hasSeenEditorTutorial: false })
+			.where(eq(users.id, locals.user.id));
 
 		return { success: true };
 	}

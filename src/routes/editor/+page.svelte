@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fly, scale, fade } from 'svelte/transition';
 	import { cubicOut, backOut } from 'svelte/easing';
-	import { EditorPitch, Timeline, MetadataForm, EditorToolbar, PlayerActionPanel } from '$lib/components/editor';
+	import { EditorPitch, Timeline, MetadataForm, EditorToolbar, PlayerActionPanel, EditorTutorial } from '$lib/components/editor';
 	import GoalAnimation from '$lib/components/animation/GoalAnimation.svelte';
 	import { editorState } from '$lib/editor-state.svelte';
 	import { toast } from 'svelte-sonner';
@@ -14,6 +14,7 @@
 	let viewMode = $state<ViewMode>('edit');
 	let mounted = $state(false);
 	let resubmitId = $state<string | null>(null);
+	let showTutorial = $state(!data.user?.hasSeenEditorTutorial);
 
 	onMount(() => {
 		mounted = true;
@@ -109,6 +110,12 @@
 		} finally {
 			isSubmitting = false;
 		}
+	}
+
+	async function handleTutorialComplete() {
+		showTutorial = false;
+		const formData = new FormData();
+		await fetch('?/markTutorialSeen', { method: 'POST', body: formData });
 	}
 
 	function handleReset() {
@@ -331,4 +338,8 @@
 			{/if}
 		</div>
 	</div>
+
+	{#if showTutorial}
+		<EditorTutorial oncomplete={handleTutorialComplete} />
+	{/if}
 </div>

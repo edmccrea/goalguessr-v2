@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `has_seen_editor_tutorial` integer DEFAULT false;
