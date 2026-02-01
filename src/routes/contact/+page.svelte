@@ -119,7 +119,14 @@
             method="POST"
             class="bg-surface border border-border rounded-2xl p-6 shadow-lg space-y-5"
             in:fly={{ y: 20, duration: 500, delay: 100, easing: cubicOut }}
-            onsubmit={() => {
+            onsubmit={async (e) => {
+              e.preventDefault();
+              const form = e.currentTarget;
+              await fetch(form.action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: { Accept: "application/json" },
+              });
               submitted = true;
             }}
           >
