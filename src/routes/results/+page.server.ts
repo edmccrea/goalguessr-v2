@@ -1,11 +1,10 @@
 import type { PageServerLoad } from './$types';
 import { redirect, error } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { goals, guesses } from '$lib/server/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { goals, guesses, gameResults } from '$lib/server/db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import {
 	getTodaysDailyGame,
-	getOrCreateGameResult,
 	getGuessesForGame
 } from '$lib/server/game';
 
@@ -93,7 +92,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(303, '/play');
 	}
 
-	const gameResult = await getOrCreateGameResult(locals.sessionId, dailyGame.id);
+	const gameResult = await db
+		.select()
+		.from(gameResults)
+		.where(and(eq(gameResults.sessionId, locals.sessionId), eq(gameResults.dailyGameId, dailyGame.id)))
+		.get();
+
+	// No game result exists - user hasn't started playing
+	if (!gameResult) {
+		throw redirect(303, '/play');
+	}
+
 	const existingGuesses = await getGuessesForGame(gameResult.id);
 
 	// Check if user has completed at least one round

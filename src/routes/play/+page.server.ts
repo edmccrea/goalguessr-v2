@@ -19,31 +19,41 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	// Allow dev tools page to be accessed directly
 	if (url.searchParams.has('dev') && dev) {
-		const gameResult = await getOrCreateGameResult(locals.sessionId, dailyGame.id);
 		return { isDev: dev };
 	}
 
-	const gameResult = await getOrCreateGameResult(locals.sessionId, dailyGame.id);
-	const existingGuesses = await getGuessesForGame(gameResult.id);
+	// Check for existing game result without creating one
+	const existingGameResult = await db
+		.select()
+		.from(gameResults)
+		.where(and(eq(gameResults.sessionId, locals.sessionId), eq(gameResults.dailyGameId, dailyGame.id)))
+		.get();
 
-	// Determine round status
-	const roundStatus = [1, 2, 3].map((roundNumber) => {
-		const guess = existingGuesses.find((g) => g.roundNumber === roundNumber);
-		return {
-			roundNumber,
-			completed: !!guess
-		};
-	});
+	if (existingGameResult) {
+		const existingGuesses = await getGuessesForGame(existingGameResult.id);
 
-	const allCompleted = roundStatus.every((r) => r.completed);
+		// Determine round status
+		const roundStatus = [1, 2, 3].map((roundNumber) => {
+			const guess = existingGuesses.find((g) => g.roundNumber === roundNumber);
+			return {
+				roundNumber,
+				completed: !!guess
+			};
+		});
 
-	// Redirect to first incomplete round or results if all done
-	if (allCompleted) {
-		throw redirect(303, '/results');
+		const allCompleted = roundStatus.every((r) => r.completed);
+
+		// Redirect to results if all done
+		if (allCompleted) {
+			throw redirect(303, '/results');
+		}
+
+		const firstIncompleteRound = roundStatus.find((r) => !r.completed);
+		throw redirect(303, `/play/${firstIncompleteRound?.roundNumber ?? 1}`);
 	}
 
-	const firstIncompleteRound = roundStatus.find((r) => !r.completed);
-	throw redirect(303, `/play/${firstIncompleteRound?.roundNumber ?? 1}`);
+	// No existing game result - redirect to round 1 (game result will be created there)
+	throw redirect(303, '/play/1');
 };
 
 export const actions: Actions = {
