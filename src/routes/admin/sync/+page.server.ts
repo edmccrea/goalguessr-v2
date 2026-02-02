@@ -8,7 +8,8 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	sync: async () => {
+	sync: async ({ locals }) => {
+		if (!locals.user?.isAdmin) return fail(403, { error: 'Unauthorized' });
 		try {
 			const result = await syncSampleData();
 			return {

@@ -114,7 +114,8 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	scheduleGoal: async ({ request }) => {
+	scheduleGoal: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(400, { error: 'Unauthorized' });
 		const formData = await request.formData();
 		const goalId = formData.get('goalId') as string;
 		const date = formData.get('date') as string;
@@ -154,7 +155,8 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	removeFromQueue: async ({ request }) => {
+	removeFromQueue: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(400, { error: 'Unauthorized' });
 		const formData = await request.formData();
 		const queueId = formData.get('queueId') as string;
 
@@ -167,7 +169,8 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	updateGameSlot: async ({ request }) => {
+	updateGameSlot: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(400, { error: 'Unauthorized' });
 		const formData = await request.formData();
 		const gameId = formData.get('gameId') as string;
 		const goalId = formData.get('goalId') as string;
@@ -198,7 +201,8 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	removeGameSlot: async ({ request }) => {
+	removeGameSlot: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(400, { error: 'Unauthorized' });
 		const formData = await request.formData();
 		const gameId = formData.get('gameId') as string;
 		const position = parseInt(formData.get('position') as string);
@@ -228,7 +232,8 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	autoFillGame: async ({ request }) => {
+	autoFillGame: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(400, { error: 'Unauthorized' });
 		const formData = await request.formData();
 		const gameId = formData.get('gameId') as string;
 		const date = formData.get('date') as string;
@@ -295,7 +300,8 @@ export const actions: Actions = {
 		return { success: true, autoFilled: true };
 	},
 
-	createDailyGame: async ({ request }) => {
+	createDailyGame: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(400, { error: 'Unauthorized' });
 		const formData = await request.formData();
 		const date = formData.get('date') as string;
 

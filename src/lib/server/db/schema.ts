@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
 	id: text('id').primaryKey(),
@@ -16,7 +16,9 @@ export const sessions = sqliteTable('sessions', {
 	userId: text('user_id').references(() => users.id),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 	lastActiveAt: integer('last_active_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
-});
+}, (table) => [
+	index('sessions_user_id_idx').on(table.userId)
+]);
 
 export const goals = sqliteTable('goals', {
 	id: text('id').primaryKey(),
@@ -35,7 +37,9 @@ export const goals = sqliteTable('goals', {
 	submittedByUsername: text('submitted_by_username'),
 	reviewedBy: text('reviewed_by').references(() => users.id),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
-});
+}, (table) => [
+	index('goals_status_idx').on(table.status)
+]);
 
 export const dailyGames = sqliteTable('daily_games', {
 	id: text('id').primaryKey(),
@@ -67,7 +71,9 @@ export const gameResults = sqliteTable('game_results', {
 	round2StartedAt: integer('round_2_started_at', { mode: 'timestamp' }),
 	round3StartedAt: integer('round_3_started_at', { mode: 'timestamp' }),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
-});
+}, (table) => [
+	index('game_results_session_daily_idx').on(table.sessionId, table.dailyGameId)
+]);
 
 export const guesses = sqliteTable('guesses', {
 	id: text('id').primaryKey(),
@@ -82,7 +88,9 @@ export const guesses = sqliteTable('guesses', {
 	scorerCorrect: integer('scorer_correct', { mode: 'boolean' }),
 	timeTakenMs: integer('time_taken_ms'),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date())
-});
+}, (table) => [
+	index('guesses_game_result_id_idx').on(table.gameResultId)
+]);
 
 // Teams table for autocomplete suggestions
 export const teams = sqliteTable('teams', {
@@ -171,7 +179,7 @@ export const syncLogs = sqliteTable('sync_logs', {
 // Rate limiting table for persistent rate limits across serverless cold starts
 export const rateLimits = sqliteTable('rate_limits', {
 	key: text('key').notNull(),
-	type: text('type', { enum: ['login', 'register', 'submission'] }).notNull(),
+	type: text('type', { enum: ['login', 'register', 'submission', 'search'] }).notNull(),
 	count: integer('count').notNull().default(0),
 	windowStart: integer('window_start').notNull()
 }, (table) => [

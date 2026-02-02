@@ -64,6 +64,8 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	toggleAdmin: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(403, { error: 'Unauthorized' });
+
 		const formData = await request.formData();
 		const userId = formData.get('userId') as string;
 

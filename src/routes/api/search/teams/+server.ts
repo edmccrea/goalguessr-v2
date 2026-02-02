@@ -3,8 +3,10 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { teams, teamAliases } from '$lib/server/db/schema';
 import { like, or, eq, and } from 'drizzle-orm';
+import { union } from 'drizzle-orm/sqlite-core';
+import { checkSearchRateLimit } from '$lib/server/rate-limit';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, getClientAddress }) => {
 	const query = url.searchParams.get('q')?.toLowerCase().trim();
 	const internationalParam = url.searchParams.get('international');
 
@@ -12,32 +14,42 @@ export const GET: RequestHandler = async ({ url }) => {
 		return json({ suggestions: [] });
 	}
 
+	// Rate limit search requests
+	const { allowed } = await checkSearchRateLimit(getClientAddress());
+	if (!allowed) {
+		return json({ suggestions: [] }, { status: 429 });
+	}
+
 	const searchPattern = `%${query}%`;
 
 	try {
-		// Build where conditions
-		const searchCondition = or(
+		// Build international filter condition
+		const internationalFilter =
+			internationalParam === 'true'
+				? eq(teams.isNationalTeam, true)
+				: internationalParam === 'false'
+					? eq(teams.isNationalTeam, false)
+					: undefined;
+
+		// Combined query: search by name/shortName/code UNION search by alias
+		const nameCondition = or(
 			like(teams.name, searchPattern),
 			like(teams.shortName, searchPattern),
 			like(teams.code, searchPattern)
 		);
 
-		// Filter by team type if international param is specified
-		let whereCondition;
-		if (internationalParam === 'true') {
-			// Only national teams
-			whereCondition = and(searchCondition, eq(teams.isNationalTeam, true));
-		} else if (internationalParam === 'false') {
-			// Only club teams
-			whereCondition = and(searchCondition, eq(teams.isNationalTeam, false));
-		} else {
-			// No filter - show all teams
-			whereCondition = searchCondition;
-		}
+		const nameWhere = internationalFilter
+			? and(nameCondition, internationalFilter)
+			: nameCondition;
 
-		// Search teams by name, short name, or code
-		const results = await db
-			.selectDistinct({
+		const aliasCondition = like(teamAliases.alias, searchPattern);
+		const aliasWhere = internationalFilter
+			? and(aliasCondition, internationalFilter)
+			: aliasCondition;
+
+		// Combined UNION query: search by name/shortName/code OR by alias
+		const nameQuery = db
+			.select({
 				id: teams.id,
 				name: teams.name,
 				shortName: teams.shortName,
@@ -45,46 +57,25 @@ export const GET: RequestHandler = async ({ url }) => {
 				isNationalTeam: teams.isNationalTeam
 			})
 			.from(teams)
-			.where(whereCondition)
-			.limit(10);
+			.where(nameWhere);
 
-		// Also search in aliases if we don't have enough results
-		if (results.length < 5) {
-			// Build alias where condition based on international param
-			let aliasWhereCondition;
-			if (internationalParam === 'true') {
-				aliasWhereCondition = and(like(teamAliases.alias, searchPattern), eq(teams.isNationalTeam, true));
-			} else if (internationalParam === 'false') {
-				aliasWhereCondition = and(like(teamAliases.alias, searchPattern), eq(teams.isNationalTeam, false));
-			} else {
-				aliasWhereCondition = like(teamAliases.alias, searchPattern);
-			}
+		const aliasQuery = db
+			.select({
+				id: teams.id,
+				name: teams.name,
+				shortName: teams.shortName,
+				country: teams.country,
+				isNationalTeam: teams.isNationalTeam
+			})
+			.from(teams)
+			.innerJoin(teamAliases, eq(teamAliases.teamId, teams.id))
+			.where(aliasWhere);
 
-			const aliasResults = await db
-				.selectDistinct({
-					id: teams.id,
-					name: teams.name,
-					shortName: teams.shortName,
-					country: teams.country,
-					isNationalTeam: teams.isNationalTeam
-				})
-				.from(teams)
-				.innerJoin(teamAliases, eq(teamAliases.teamId, teams.id))
-				.where(aliasWhereCondition)
-				.limit(10 - results.length);
-
-			// Merge and dedupe
-			const existingIds = new Set(results.map((r) => r.id));
-			for (const alias of aliasResults) {
-				if (!existingIds.has(alias.id)) {
-					results.push(alias);
-				}
-			}
-		}
+		const allResults = await union(nameQuery, aliasQuery).limit(10);
 
 		return json(
 			{
-				suggestions: results.map((r) => ({
+				suggestions: allResults.map((r) => ({
 					id: r.id,
 					label: r.name,
 					sublabel: r.country ?? undefined
@@ -97,7 +88,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			}
 		);
 	} catch (error) {
-		console.error('Team search error:', error);
+		console.error('Team search error:', error instanceof Error ? error.message : 'Unknown error');
 		return json({ suggestions: [] });
 	}
 };

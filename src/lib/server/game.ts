@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 import { db } from './db';
 import { dailyGames, goals, gameResults, guesses } from './db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 function generateId(): string {
 	return crypto.randomUUID();
@@ -22,23 +22,35 @@ export async function getTodaysDailyGame() {
 	// Check if today's game exists
 	let dailyGame = await db.select().from(dailyGames).where(eq(dailyGames.date, today)).get();
 
-	if (!dailyGame) {
-		// Get approved goals
-		let availableGoals = await db.select().from(goals).where(eq(goals.status, 'approved')).all();
+	if (!dailyGame || (!dailyGame.goal1Id && !dailyGame.goal2Id && !dailyGame.goal3Id)) {
+		// Delete empty game if it exists so we can recreate with goals
+		if (dailyGame) {
+			await db.delete(dailyGames).where(eq(dailyGames.id, dailyGame.id));
+		}
+
+		// Select 3 random approved goals without loading all goals
+		let selectedGoals = await db
+			.select()
+			.from(goals)
+			.where(eq(goals.status, 'approved'))
+			.orderBy(sql`RANDOM()`)
+			.limit(3);
 
 		// In dev mode only, create sample goals if none exist
-		if (dev && availableGoals.length < 3) {
+		if (dev && selectedGoals.length < 3) {
 			await createSampleGoals();
-			availableGoals = await db.select().from(goals).where(eq(goals.status, 'approved')).all();
+			selectedGoals = await db
+				.select()
+				.from(goals)
+				.where(eq(goals.status, 'approved'))
+				.orderBy(sql`RANDOM()`)
+				.limit(3);
 		}
 
 		// If still no approved goals, return null (no game available)
-		if (availableGoals.length === 0) {
+		if (selectedGoals.length === 0) {
 			return null;
 		}
-
-		// Select 3 goals for today (just take first 3 for now)
-		const selectedGoals = availableGoals.slice(0, 3);
 
 		// Create daily game
 		const dailyGameId = generateId();

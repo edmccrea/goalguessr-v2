@@ -56,7 +56,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			message: 'No matching goals found - this appears to be unique!'
 		});
 	} catch (error) {
-		console.error('Duplicate check error:', error);
+		console.error('Duplicate check error:', error instanceof Error ? error.message : 'Unknown error');
 		return json({ error: 'Failed to check for duplicates' }, { status: 500 });
 	}
 };

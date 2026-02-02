@@ -54,7 +54,7 @@
 				setTimeout(() => goto('/admin/review'), 1000);
 			}
 		} catch (error) {
-			console.error('Error submitting with entity data:', error);
+			console.error('Error submitting with entity data:', error instanceof Error ? error.message : 'Unknown error');
 		} finally {
 			isSubmittingWithData = false;
 		}

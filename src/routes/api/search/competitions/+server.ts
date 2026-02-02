@@ -3,13 +3,20 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { competitions } from '$lib/server/db/schema';
 import { like, or, eq, and } from 'drizzle-orm';
+import { checkSearchRateLimit } from '$lib/server/rate-limit';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, getClientAddress }) => {
 	const query = url.searchParams.get('q')?.toLowerCase().trim();
 	const internationalParam = url.searchParams.get('international');
 
 	if (!query || query.length < 2) {
 		return json({ suggestions: [] });
+	}
+
+	// Rate limit search requests
+	const { allowed } = await checkSearchRateLimit(getClientAddress());
+	if (!allowed) {
+		return json({ suggestions: [] }, { status: 429 });
 	}
 
 	const searchPattern = `%${query}%`;
@@ -62,7 +69,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			}
 		);
 	} catch (error) {
-		console.error('Competition search error:', error);
+		console.error('Competition search error:', error instanceof Error ? error.message : 'Unknown error');
 		return json({ suggestions: [] });
 	}
 };

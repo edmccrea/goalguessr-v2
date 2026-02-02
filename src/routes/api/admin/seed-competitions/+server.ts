@@ -148,7 +148,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 		return json({ success: true, inserted, total: competitionData.length });
 	} catch (error) {
-		console.error('Seed competitions error:', error);
-		return json({ success: false, error: String(error) }, { status: 500 });
+		console.error('Seed competitions error:', error instanceof Error ? error.message : 'Unknown error');
+		return json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
 	}
 };

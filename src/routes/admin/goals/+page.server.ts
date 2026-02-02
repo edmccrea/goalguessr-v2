@@ -56,7 +56,9 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(403, { error: 'Unauthorized' });
+
 		const formData = await request.formData();
 		const goalId = formData.get('goalId') as string;
 
@@ -90,7 +92,9 @@ export const actions: Actions = {
 		return { success: true, action: 'deleted' };
 	},
 
-	updateStatus: async ({ request }) => {
+	updateStatus: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(403, { error: 'Unauthorized' });
+
 		const formData = await request.formData();
 		const goalId = formData.get('goalId') as string;
 		const status = formData.get('status') as 'pending' | 'approved' | 'rejected';

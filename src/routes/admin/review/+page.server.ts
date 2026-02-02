@@ -51,6 +51,8 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	approve: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(403, { error: 'Unauthorized' });
+
 		const formData = await request.formData();
 		const goalId = formData.get('goalId') as string;
 
@@ -89,6 +91,8 @@ export const actions: Actions = {
 	},
 
 	reject: async ({ request, locals }) => {
+		if (!locals.user?.isAdmin) return fail(403, { error: 'Unauthorized' });
+
 		const formData = await request.formData();
 		const goalId = formData.get('goalId') as string;
 		const rejectionReason = formData.get('rejectionReason') as string | null;

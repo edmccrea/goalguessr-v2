@@ -55,7 +55,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const goal = await getGoalForRound(dailyGame.id, roundNumber);
 
 	if (!goal) {
-		throw redirect(303, '/play/1');
+		throw error(500, {
+			message: 'Goal not found',
+			details: 'The goal for this round could not be loaded.'
+		});
 	}
 
 	// Get or set the round start time (prevents timer reset exploit)
@@ -83,7 +86,6 @@ export const actions: Actions = {
 		const team = (formData.get('team') as string)?.trim();
 		const yearStr = formData.get('year') as string;
 		const scorer = (formData.get('scorer') as string)?.trim();
-		const timeTakenMs = parseInt(formData.get('timeTakenMs') as string) || 0;
 
 		// Validate inputs
 		if (!team) {
@@ -117,6 +119,10 @@ export const actions: Actions = {
 		if (!goal) {
 			return fail(500, { error: 'Goal not found' });
 		}
+
+		// Calculate time server-side from stored round start time (ignore client-supplied value)
+		const roundStartedAt = await getOrSetRoundStartTime(gameResult.id, roundNumber);
+		const timeTakenMs = Date.now() - roundStartedAt.getTime();
 
 		// Calculate score
 		const result = calculateScore(

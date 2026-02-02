@@ -88,7 +88,7 @@ export const PUT: RequestHandler = async ({ request, locals, params }) => {
 
 		return json({ success: true, id: params.id });
 	} catch (error) {
-		console.error('Goal update error:', error);
+		console.error('Goal update error:', error instanceof Error ? error.message : 'Unknown error');
 		return json({ error: 'Failed to update goal' }, { status: 500 });
 	}
 };

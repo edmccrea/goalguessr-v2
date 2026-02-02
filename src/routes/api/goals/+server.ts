@@ -147,7 +147,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		return json({ success: true, id }, { status: 201 });
 	} catch (error) {
-		console.error('Goal submission error:', error);
+		console.error('Goal submission error:', error instanceof Error ? error.message : 'Unknown error');
 		return json({ error: 'Failed to submit goal' }, { status: 500 });
 	}
 };

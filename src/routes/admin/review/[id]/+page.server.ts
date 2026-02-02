@@ -43,6 +43,8 @@ export const load: PageServerLoad = async ({ params }) => {
 
 export const actions: Actions = {
 	approve: async ({ params, locals, request }) => {
+		if (!locals.user?.isAdmin) return fail(403, { error: 'Unauthorized' });
+
 		const goal = await db.select().from(goals).where(eq(goals.id, params.id)).get();
 
 		if (!goal) {
@@ -109,6 +111,8 @@ export const actions: Actions = {
 	},
 
 	reject: async ({ params, locals, request }) => {
+		if (!locals.user?.isAdmin) return fail(403, { error: 'Unauthorized' });
+
 		const goal = await db.select().from(goals).where(eq(goals.id, params.id)).get();
 
 		if (!goal) {
